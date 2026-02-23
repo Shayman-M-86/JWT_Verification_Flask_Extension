@@ -164,6 +164,7 @@ verifier = JWTVerifier(
 ## Common Patterns
 
 ### Optional Authentication
+
 ```python
 def optional_auth(f):
     @wraps(f)
@@ -186,6 +187,7 @@ def content():
 ```
 
 ### Resource Ownership Check
+
 ```python
 @app.route("/posts/<id>", methods=["PUT"])
 @auth.require(permissions=["write:posts"])
@@ -234,7 +236,7 @@ curl https://your-tenant.auth0.com/.well-known/jwks.json
 ## Key Classes
 
 | Class | Purpose |
-|-------|---------|
+| ------- | --------- |
 | `AuthExtension` | Flask decorator for routes |
 | `JWTVerifier` | Verify JWT signatures |
 | `Auth0JWKSProvider` | Fetch keys from Auth0 |
@@ -247,7 +249,7 @@ curl https://your-tenant.auth0.com/.well-known/jwks.json
 ## Key Errors
 
 | Error | Status | Meaning |
-|-------|--------|---------|
+| ------- | ------ | --------- |
 | `MissingToken` | 401 | No token in request |
 | `InvalidToken` | 401 | Bad signature/claims |
 | `ExpiredToken` | 401 | Token expired |
@@ -256,6 +258,7 @@ curl https://your-tenant.auth0.com/.well-known/jwks.json
 ## Configuration Options
 
 ### JWTVerifyOptions
+
 ```python
 JWTVerifyOptions(
     issuer="https://tenant.auth0.com/",  # Required
@@ -265,6 +268,7 @@ JWTVerifyOptions(
 ```
 
 ### Auth0JWKSProvider
+
 ```python
 Auth0JWKSProvider(
     issuer="...",              # Required
@@ -277,6 +281,7 @@ Auth0JWKSProvider(
 ```
 
 ### ClaimsMapping
+
 ```python
 ClaimsMapping(
     permissions_claim="permissions",  # Default

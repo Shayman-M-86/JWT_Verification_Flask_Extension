@@ -30,6 +30,7 @@ class AuthExtension:
 ```
 
 **Parameters:**
+
 - `verifier` (TokenVerifier): Token verification implementation
 - `authorizer` (Authorizer | None): Optional authorization implementation
 - `extractor` (Extractor | None): Token extraction implementation (default: BearerExtractor)
@@ -52,15 +53,18 @@ def init_app(
 Initialize with Flask application (application factory pattern).
 
 **Parameters:**
+
 - `app` (Flask): Flask application instance
 - `verifier` (TokenVerifier | None): Override verifier
 - `authorizer` (Authorizer | None): Override authorizer
 - `extractor` (Extractor | None): Override extractor
 
 **Side Effects:**
+
 - Registers extension in `app.extensions["auth_extension"]`
 
 **Example:**
+
 ```python
 auth = AuthExtension(verifier=verifier)
 auth.init_app(app)
@@ -81,21 +85,26 @@ def require(
 Decorator factory for protecting Flask routes.
 
 **Parameters:**
+
 - `permissions` (Sequence[str]): Required permissions
 - `roles` (Sequence[str]): Required roles (user must have at least one)
 - `require_all_permissions` (bool): If True, user must have all permissions; if False, user needs at least one
 
 **Returns:**
+
 - Decorator function for Flask routes
 
 **Raises:**
+
 - `401 Unauthorized`: If token is missing, expired, or invalid
 - `403 Forbidden`: If authorization fails
 
 **Side Effects:**
+
 - Stores verified claims in `flask.g.jwt`
 
 **Example:**
+
 ```python
 @app.route("/admin")
 @auth.require(roles=["admin"])
@@ -119,6 +128,7 @@ class JWTVerifier(TokenVerifier):
 ```
 
 **Parameters:**
+
 - `key_provider` (KeyProvider): Signing key provider
 - `options` (JWTVerifyOptions): Verification options (issuer, audience, algorithms)
 
@@ -133,16 +143,20 @@ def verify(self, token: str) -> Claims
 Verify JWT and return claims.
 
 **Parameters:**
+
 - `token` (str): Raw JWT string
 
 **Returns:**
+
 - `Claims`: Decoded claims dictionary
 
 **Raises:**
+
 - `InvalidToken`: If signature invalid or claims validation fails
 - `ExpiredToken`: If token is expired
 
 **Process:**
+
 1. Extract `kid` from unverified header
 2. Get verification key from KeyProvider
 3. Verify signature using PyJWT
@@ -150,6 +164,7 @@ Verify JWT and return claims.
 5. Return decoded claims
 
 **Example:**
+
 ```python
 claims = verifier.verify(token)
 user_id = claims["sub"]
@@ -175,7 +190,8 @@ class Auth0JWKSProvider(KeyProvider):
 ```
 
 **Parameters:**
-- `issuer` (str): Auth0 issuer URL (e.g., "https://tenant.auth0.com/")
+
+- `issuer` (str): Auth0 issuer URL (e.g., "<https://tenant.auth0.com/>")
 - `cache` (CacheStore | None): Cache implementation (default: InMemoryCache)
 - `ttl_seconds` (int): Cache TTL for valid keys in seconds (default: 600)
 - `missing_ttl_seconds` (int): Cache TTL for unknown kids in seconds (default: 30)
@@ -183,6 +199,7 @@ class Auth0JWKSProvider(KeyProvider):
 - `alert_threshold` (int): Denied refresh attempts before alerting (default: 40)
 
 **Derived Properties:**
+
 - JWKS URL: `{issuer}.well-known/jwks.json`
 
 **Methods:**
@@ -196,15 +213,19 @@ def get_key_for_token(self, kid: str) -> PyJWK
 Resolve signing key for given key ID.
 
 **Parameters:**
+
 - `kid` (str): Key ID from JWT header
 
 **Returns:**
+
 - `PyJWK`: Verification key
 
 **Raises:**
+
 - `InvalidToken`: If key cannot be resolved
 
 **Resolution Strategy:**
+
 1. Check cache (O(1), fast path)
 2. Try PyJWKClient.get_signing_key (may internally refresh JWKS)
 3. On failure, negative-cache the kid (30s TTL)
@@ -212,6 +233,7 @@ Resolve signing key for given key ID.
 5. If throttled or still not found: raise InvalidToken
 
 **Example:**
+
 ```python
 provider = Auth0JWKSProvider(
     issuer="https://tenant.auth0.com/",
@@ -233,6 +255,7 @@ class RBACAuthorizer(Authorizer):
 ```
 
 **Parameters:**
+
 - `claims` (ClaimAccess): Claims accessor for extracting roles/permissions
 
 **Methods:**
@@ -253,20 +276,24 @@ def authorize(
 Enforce authorization rules.
 
 **Parameters:**
+
 - `claims` (Claims): Verified JWT claims
 - `permissions` (FrozenSet[str]): Required permissions
 - `roles` (FrozenSet[str]): Required roles
 - `require_all_permissions` (bool): Permission requirement mode
 
 **Raises:**
+
 - `Forbidden`: If authorization fails
 
 **Logic:**
+
 - **Roles**: User must have at least ONE of the required roles
 - **Permissions** (require_all_permissions=True): User must have ALL required permissions
 - **Permissions** (require_all_permissions=False): User must have at least ONE required permission
 
 **Example:**
+
 ```python
 authorizer = RBACAuthorizer(ClaimAccess(mapping))
 authorizer.authorize(
@@ -289,6 +316,7 @@ class ClaimAccess:
 ```
 
 **Parameters:**
+
 - `mapping` (ClaimsMapping): Configuration for where roles/permissions live in JWT
 
 **Methods:**
@@ -302,12 +330,15 @@ def permissions(self, claims: Claims) -> FrozenSet[str]
 Extract permissions from claims.
 
 **Parameters:**
+
 - `claims` (Claims): JWT claims dictionary
 
 **Returns:**
+
 - `FrozenSet[str]`: Set of permission strings
 
 **Supports:**
+
 - List of strings: `["read:posts", "write:posts"]`
 - Space-separated string: `"read:posts write:posts"`
 - Empty/missing claim: returns empty set
@@ -321,17 +352,21 @@ def roles(self, claims: Claims) -> FrozenSet[str]
 Extract roles from claims.
 
 **Parameters:**
+
 - `claims` (Claims): JWT claims dictionary
 
 **Returns:**
+
 - `FrozenSet[str]`: Set of role strings
 
 **Supports:**
+
 - List of strings: `["admin", "editor"]`
 - Single string: `"admin"`
 - Multiple claim sources (single_role_claim + roles_claim)
 
 **Example:**
+
 ```python
 claims_access = ClaimAccess(ClaimsMapping())
 user_perms = claims_access.permissions(claims)
@@ -360,12 +395,15 @@ def get(self, kid: str) -> Optional[PyJWK]
 Get cached key by kid.
 
 **Parameters:**
+
 - `kid` (str): Key ID
 
 **Returns:**
+
 - `PyJWK | None`: Cached key or None if not found/expired
 
 **Side Effects:**
+
 - Removes expired entries on access (lazy expiration)
 
 #### `set`
@@ -377,10 +415,12 @@ def set(self, key: PyJWK, ttl_seconds: int) -> None
 Cache a signing key.
 
 **Parameters:**
+
 - `key` (PyJWK): Signing key to cache
 - `ttl_seconds` (int): Time-to-live in seconds
 
 **Raises:**
+
 - `ValueError`: If key doesn't have a kid
 
 #### `set_missing`
@@ -392,6 +432,7 @@ def set_missing(self, kid: str, ttl_seconds: int) -> None
 Cache a known-missing kid (negative cache).
 
 **Parameters:**
+
 - `kid` (str): Key ID to mark as missing
 - `ttl_seconds` (int): Time-to-live in seconds
 
@@ -404,12 +445,15 @@ def is_missing(self, kid: str) -> bool
 Check if kid is cached as missing.
 
 **Parameters:**
+
 - `kid` (str): Key ID
 
 **Returns:**
+
 - `bool`: True if kid is cached as missing (and not expired)
 
 **Example:**
+
 ```python
 cache = InMemoryCache()
 cache.set(key, ttl_seconds=600)
@@ -428,6 +472,7 @@ class RedisCache:
 ```
 
 **Parameters:**
+
 - `redis_client` (Any): Redis client instance (from redis-py)
 
 **Note:** Requires `redis_client` with `decode_responses=False`
@@ -437,11 +482,13 @@ class RedisCache:
 Same interface as InMemoryCache: `get`, `set`, `set_missing`, `is_missing`
 
 **Serialization:**
+
 - Keys stored as JSON under Redis key = kid
 - Uses Redis SETEX for automatic TTL expiration
 - Negative cache entries: `{"__missing__": True}`
 
 **Example:**
+
 ```python
 import redis
 redis_client = redis.Redis(host='localhost', decode_responses=False)
@@ -460,17 +507,21 @@ class BearerExtractor(Extractor):
 ```
 
 **Expected Header:**
-```
+
+```text
 Authorization: Bearer <JWT>
 ```
 
 **Returns:**
+
 - `str`: JWT token
 
 **Raises:**
+
 - `MissingToken`: If header is missing or doesn't start with "Bearer "
 
 **Example:**
+
 ```python
 extractor = BearerExtractor()
 auth = AuthExtension(verifier=verifier, extractor=extractor)
@@ -488,6 +539,7 @@ class CookieExtractor(Extractor):
 ```
 
 **Parameters:**
+
 - `cookie_name` (str): Name of cookie containing JWT (default: "access_token")
 
 **Methods:**
@@ -499,12 +551,15 @@ def extract(self) -> str
 ```
 
 **Returns:**
+
 - `str`: JWT token from cookie
 
 **Raises:**
+
 - `MissingToken`: If cookie is missing
 
 **Example:**
+
 ```python
 extractor = CookieExtractor(cookie_name="jwt_token")
 auth = AuthExtension(verifier=verifier, extractor=extractor)
@@ -526,6 +581,7 @@ class RefreshGate:
 ```
 
 **Parameters:**
+
 - `min_interval` (float): Minimum seconds between allowed refreshes (default: 60.0)
 - `alert_threshold` (int): Denied attempts before alerting (default: 40)
 
@@ -540,17 +596,21 @@ def allow(self) -> bool
 Check if refresh operation is allowed.
 
 **Returns:**
+
 - `bool`: True if allowed, False if throttled
 
 **Side Effects:**
+
 - Updates internal state (next allowed time, retry counter)
 - Increments retry counter on denial
 - Triggers alert hook at threshold (TODO in implementation)
 
 **Thread Safety:**
+
 - Uses threading.Lock for concurrent access
 
 **Example:**
+
 ```python
 gate = RefreshGate(min_interval=120.0, alert_threshold=30)
 if gate.allow():
@@ -581,15 +641,19 @@ class TokenVerifier(Protocol):
 Verify JWT and return decoded claims.
 
 **Parameters:**
+
 - `token` (str): Raw JWT string
 
 **Returns:**
+
 - `Claims`: Decoded claims dictionary
 
 **Raises:**
+
 - `AuthError` subclasses on failure
 
 **Implementations:**
+
 - `JWTVerifier`: Standard JWT verification with PyJWT
 
 ---
@@ -610,15 +674,19 @@ class KeyProvider(Protocol):
 Resolve verification key for given key ID.
 
 **Parameters:**
+
 - `kid` (str): Key ID from JWT header
 
 **Returns:**
+
 - `PyJWK`: Verification key
 
 **Raises:**
+
 - `InvalidToken`: If key cannot be resolved
 
 **Implementations:**
+
 - `Auth0JWKSProvider`: Fetch keys from Auth0 JWKS endpoint
 
 ---
@@ -646,15 +714,18 @@ class Authorizer(Protocol):
 Enforce authorization rules.
 
 **Parameters:**
+
 - `claims` (Claims): Verified JWT claims
 - `permissions` (FrozenSet[str]): Required permissions
 - `roles` (FrozenSet[str]): Required roles
 - `require_all_permissions` (bool): Permission requirement mode
 
 **Raises:**
+
 - `Forbidden`: If authorization fails
 
 **Implementations:**
+
 - `RBACAuthorizer`: Role-based and permission-based authorization
 
 ---
@@ -676,6 +747,7 @@ class CacheStore(Protocol):
 See `InMemoryCache` for detailed method documentation.
 
 **Implementations:**
+
 - `InMemoryCache`: In-process dictionary cache
 - `RedisCache`: Redis-backed distributed cache
 
@@ -692,17 +764,20 @@ class Extractor(Protocol):
 
 **Methods:**
 
-#### `extract`
+#### `extract` 
 
 Extract JWT from Flask request.
 
 **Returns:**
+
 - `str`: Raw JWT string
 
 **Raises:**
+
 - `MissingToken`: If token cannot be extracted
 
 **Implementations:**
+
 - `BearerExtractor`: Extract from Authorization header
 - `CookieExtractor`: Extract from cookie
 
@@ -723,16 +798,19 @@ class JWTVerifyOptions:
 Configuration for JWT verification.
 
 **Fields:**
-- `issuer` (str | None): Expected `iss` claim (e.g., "https://tenant.auth0.com/")
+
+- `issuer` (str | None): Expected `iss` claim (e.g., "<https://tenant.auth0.com/>")
 - `audience` (str | None): Expected `aud` claim (your API identifier)
 - `algorithms` (tuple[str, ...]): Allowed signature algorithms (default: ("RS256",))
 
 **Security Notes:**
+
 - Never set algorithms to include "none" or weak algorithms
 - Always specify issuer and audience for production
 - Use Only RS256 for Auth0
 
 **Example:**
+
 ```python
 options = JWTVerifyOptions(
     issuer="https://tenant.auth0.com/",
@@ -756,6 +834,7 @@ class ClaimsMapping:
 Configuration for where roles/permissions live in JWT claims.
 
 **Fields:**
+
 - `permissions_claim` (str): Claim containing permissions list (default: "permissions")
 - `roles_claim` (str): Claim containing roles list (default: "roles")
 - `single_role_claim` (str | None): Optional claim containing single role string
@@ -763,6 +842,7 @@ Configuration for where roles/permissions live in JWT claims.
 **Auth0 Configuration:**
 
 For custom namespaced claims:
+
 ```python
 mapping = ClaimsMapping(
     permissions_claim="permissions",
@@ -772,11 +852,13 @@ mapping = ClaimsMapping(
 ```
 
 For standard claims:
+
 ```python
 mapping = ClaimsMapping()  # Use defaults
 ```
 
 **Example Token Structure:**
+
 ```json
 {
   "sub": "auth0|123",
@@ -800,6 +882,7 @@ class AuthError(Exception):
 Base class for all auth-related errors.
 
 **Usage:**
+
 ```python
 from jwt_verification import AuthError
 
@@ -824,6 +907,7 @@ Raised by extractors when token cannot be found in request.
 **HTTP Mapping:** 401 Unauthorized
 
 **Example:**
+
 ```python
 try:
     token = extractor.extract()
@@ -843,6 +927,7 @@ class InvalidToken(AuthError):
 Raised when token is present but invalid.
 
 **Causes:**
+
 - Signature verification failure
 - Wrong issuer
 - Wrong audience
@@ -853,6 +938,7 @@ Raised when token is present but invalid.
 **HTTP Mapping:** 401 Unauthorized
 
 **Example:**
+
 ```python
 try:
     claims = verifier.verify(token)
@@ -877,6 +963,7 @@ Raised when token's `exp` claim is in the past.
 **Client Action:** Request new token using refresh token
 
 **Example:**
+
 ```python
 try:
     claims = verifier.verify(token)
@@ -898,10 +985,12 @@ Raised by authorizers when user lacks required authorization.
 **HTTP Mapping:** 403 Forbidden
 
 **Distinction:**
+
 - 401 Unauthorized: "Who are you?" (authentication failed)
 - 403 Forbidden: "I know who you are, but you can't do this" (authorization failed)
 
 **Example:**
+
 ```python
 try:
     authorizer.authorize(claims, permissions=..., roles=...)
@@ -926,13 +1015,16 @@ def get_verified_id_claims(
 Verify ID token from cookie and return claims.
 
 **Parameters:**
+
 - `verifier` (TokenVerifier): Token verifier configured for ID tokens
 - `cookie_name` (str): Name of cookie containing ID token (default: "id_token")
 
 **Returns:**
+
 - `Claims`: Verified claims from ID token
 
 **Raises:**
+
 - `MissingToken`: If cookie is missing
 - `ExpiredToken`: If token is expired
 - `InvalidToken`: If signature or claims validation fails
@@ -941,6 +1033,7 @@ Verify ID token from cookie and return claims.
 ID tokens contain user profile information and are typically stored in cookies after OAuth login.
 
 **Example:**
+
 ```python
 @app.route("/user-info")
 def user_info():
@@ -956,6 +1049,7 @@ def user_info():
 ```
 
 **Configuration:**
+
 ```python
 # ID token verifier uses client ID as audience
 id_token_verifier = JWTVerifier(
@@ -980,6 +1074,7 @@ type Claims = Mapping[str, Any]
 JWT claims represented as a read-only dictionary.
 
 **Standard Claims:**
+
 - `sub` (str): Subject (user ID)
 - `iss` (str): Issuer
 - `aud` (str | list[str]): Audience
@@ -988,6 +1083,7 @@ JWT claims represented as a read-only dictionary.
 - `nbf` (int): Not before timestamp
 
 **Custom Claims:**
+
 - `email` (str): User email
 - `name` (str): User name
 - `permissions` (list[str]): User permissions
@@ -995,6 +1091,7 @@ JWT claims represented as a read-only dictionary.
 - Any custom namespaced claims
 
 **Example:**
+
 ```python
 claims: Claims = verifier.verify(token)
 user_id: str = claims["sub"]
@@ -1013,6 +1110,7 @@ type ViewFunc = Callable[..., Any]
 Flask view function type (any callable with any signature and return type).
 
 **Example:**
+
 ```python
 def my_view() -> dict:
     return {"message": "hello"}
@@ -1107,6 +1205,7 @@ from jwt_verification import (
 **Version:** 1.0.0  
 **Python:** 3.14+  
 **Dependencies:**
+
 - PyJWT[crypto] >= 2.8.0
 - Flask >= 2.3.0
 - cryptography >= 41.0.0

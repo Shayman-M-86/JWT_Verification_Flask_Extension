@@ -84,7 +84,7 @@ Start here: **[Documentation Index](docs/INDEX.md)** - Navigation guide for all 
 
 ## Project Structure
 
-```
+```text
 flask-jwt-verification/
 ├── src/
 │   └── jwt_verification/          # Main extension package
@@ -129,18 +129,23 @@ flask-jwt-verification/
 ## Core Components
 
 ### AuthExtension
+
 Flask decorator for protecting routes with JWT authentication and optional authorization.
 
 ### JWTVerifier
+
 Provider-agnostic JWT signature and claims verification.
 
 ### Auth0JWKSProvider
+
 Intelligent key provider with caching, negative caching, and DoS protection.
 
 ### RBACAuthorizer
+
 Role-based and permission-based access control.
 
 ### Cache Stores
+
 - **InMemoryCache** - For development and single-instance deployments
 - **RedisCache** - For production multi-instance deployments
 

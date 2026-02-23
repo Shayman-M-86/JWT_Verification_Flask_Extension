@@ -14,7 +14,7 @@ This demo includes:
 
 ## Architecture
 
-```
+```text
 ┌──────────────┐
 │   Browser    │
 └──────┬───────┘
@@ -91,6 +91,7 @@ Save changes.
 #### Enable RBAC (Optional)
 
 In your API settings:
+
 - Enable "RBAC"
 - Enable "Add Permissions in the Access Token"
 - Save changes
@@ -132,6 +133,7 @@ FLASK_ENV=development
 ```
 
 **Replace the placeholder values:**
+
 - `AUTH0_DOMAIN`: Your Auth0 domain (e.g., `dev-abc123.us.auth0.com`)
 - `AUTH0_CLIENT_ID`: From your Auth0 Application settings
 - `AUTH0_CLIENT_SECRET`: From your Auth0 Application settings
@@ -146,6 +148,7 @@ pip install -e ".[examples]"
 ```
 
 This installs:
+
 - The jwt_verification extension
 - Flask
 - Auth0 Python SDK
@@ -177,6 +180,7 @@ bash run.sh
 ```
 
 This script:
+
 1. Loads environment variables from `.env`
 2. Starts the backend API on port 5000 (HTTPS)
 3. Starts the login provider on port 5001 (HTTPS)
@@ -190,7 +194,7 @@ cd examples/auth0_demo
 python app.py
 ```
 
-Starts on: https://localhost:5000
+Starts on: <https://localhost:5000>
 
 #### Terminal 2 - Login Provider
 
@@ -199,13 +203,13 @@ cd examples/auth0_demo
 python login_provider.py
 ```
 
-Starts on: https://localhost:5001
+Starts on: <https://localhost:5001>
 
 ## Using the Demo
 
 ### 1. Open the Application
 
-Navigate to: https://localhost:5001
+Navigate to: <https://localhost:5001>
 
 **Note:** You'll see a browser warning about the self-signed certificate. This is expected for local development. Click "Advanced" and proceed.
 
@@ -319,7 +323,7 @@ def callback():
 
 ## Project Structure
 
-```
+```text
 examples/auth0_demo/
 ├── app.py                  # Backend API with JWT verification
 ├── login_provider.py       # OAuth login/logout flow
@@ -355,7 +359,8 @@ examples/auth0_demo/
 
 **Issue:** "Unable to fetch JWKS" or "Key not found"
 
-**Solution:** 
+**Solution:**
+
 - Verify `AUTH0_DOMAIN` is correct (no `https://` prefix)
 - Check internet connection
 - Ensure Auth0 tenant is active
@@ -365,6 +370,7 @@ examples/auth0_demo/
 **Issue:** 401 error even though user has the role
 
 **Solution:**
+
 - Enable RBAC in Auth0 API settings
 - Enable "Add Permissions in the Access Token"
 - Re-login to get a new token with roles/permissions
@@ -374,6 +380,7 @@ examples/auth0_demo/
 **Issue:** "Address already in use" error
 
 **Solution:**
+
 ```bash
 # Find and kill process using port 5000 or 5001
 # Windows
@@ -427,6 +434,7 @@ After running this demo, you can:
 ## Support
 
 For issues with:
+
 - **The Extension**: See main [README.md](../../README.md)
 - **Auth0**: Check [Auth0 Documentation](https://auth0.com/docs)
 - **This Demo**: Open an issue describing the problem

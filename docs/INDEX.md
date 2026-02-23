@@ -5,9 +5,11 @@ Welcome to the comprehensive documentation for the JWT Verification Extension. T
 ## 📚 Documentation Files
 
 ### [README.md](./README.md) - Main Documentation
+
 **Comprehensive guide covering everything you need to know.**
 
 Topics covered:
+
 - Overview and architecture
 - Core components explained
 - Security features
@@ -26,9 +28,11 @@ Topics covered:
 ---
 
 ### [SECURITY.md](./SECURITY.md) - Security Documentation
+
 **In-depth security analysis and best practices.**
 
 Topics covered:
+
 - Threat model and trust boundaries
 - Security features explained
 - Attack vectors and mitigations
@@ -43,9 +47,11 @@ Topics covered:
 ---
 
 ### [EXAMPLES.md](./EXAMPLES.md) - Code Examples
+
 **Practical code examples for common scenarios.**
 
 Topics covered:
+
 - Basic setup variations
 - Authentication examples (public/protected routes, cookies, ID tokens)
 - Authorization examples (RBAC, permissions, resource-specific)
@@ -59,9 +65,11 @@ Topics covered:
 ---
 
 ### [API_REFERENCE.md](./API_REFERENCE.md) - API Reference
+
 **Quick lookup for all classes, methods, and protocols.**
 
 Topics covered:
+
 - Core classes (AuthExtension, JWTVerifier, Auth0JWKSProvider, RBACAuthorizer, etc.)
 - Protocols (TokenVerifier, KeyProvider, Authorizer, CacheStore, Extractor)
 - Data classes (JWTVerifyOptions, ClaimsMapping)
@@ -137,6 +145,7 @@ def protected():
 ```
 
 **See also:**
+
 - [README.md - Basic Setup](./README.md#quick-start)
 - [EXAMPLES.md - Authentication Examples](./EXAMPLES.md#authentication-examples)
 
@@ -172,6 +181,7 @@ def create_post():
 ```
 
 **See also:**
+
 - [API_REFERENCE.md - RBACAuthorizer](./API_REFERENCE.md#rbacauthorizer)
 - [EXAMPLES.md - Permission-Based Access Control](./EXAMPLES.md#permission-based-access-control)
 
@@ -202,6 +212,7 @@ provider = Auth0JWKSProvider(
 ```
 
 **See also:**
+
 - [API_REFERENCE.md - RedisCache](./API_REFERENCE.md#rediscache)
 - [README.md - Scaling Considerations](./README.md#scaling-considerations)
 
@@ -229,6 +240,7 @@ def handle_forbidden(e):
 ```
 
 **See also:**
+
 - [API_REFERENCE.md - Exceptions](./API_REFERENCE.md#exceptions)
 - [EXAMPLES.md - Error Handling](./EXAMPLES.md#error-handling)
 
@@ -266,6 +278,7 @@ def test_protected_route(client):
 ```
 
 **See also:**
+
 - [README.md - Testing](./README.md#testing)
 - [EXAMPLES.md - Unit Tests](./EXAMPLES.md#unit-tests)
 
@@ -400,17 +413,20 @@ def test_protected_route(client):
 ## 🔗 External Resources
 
 ### Auth0 Documentation
+
 - [Auth0 Documentation](https://auth0.com/docs)
 - [Auth0 APIs](https://auth0.com/docs/api)
 - [JWKS Endpoint](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 - [RBAC](https://auth0.com/docs/manage-users/access-control/rbac)
 
 ### JWT Standards
+
 - [RFC 7519 - JWT](https://tools.ietf.org/html/rfc7519)
 - [RFC 7517 - JWK](https://tools.ietf.org/html/rfc7517)
 - [RFC 7518 - JWA](https://tools.ietf.org/html/rfc7518)
 
 ### Python Libraries
+
 - [PyJWT Documentation](https://pyjwt.readthedocs.io/)
 - [Flask Documentation](https://flask.palletsprojects.com/)
 - [Redis-py Documentation](https://redis-py.readthedocs.io/)
@@ -420,24 +436,28 @@ def test_protected_route(client):
 ## 📝 Document Summaries
 
 ### README.md (Main Documentation)
+
 - **Length:** ~1000 lines
 - **Scope:** Comprehensive guide to all aspects of the extension
 - **Audience:** Everyone (developers, security, devops)
 - **Best for:** Learning the extension from scratch or as complete reference
 
 ### SECURITY.md
+
 - **Length:** ~700 lines
 - **Scope:** Security analysis, threat model, attack mitigations
 - **Audience:** Security engineers, compliance teams, developers
 - **Best for:** Security reviews, compliance audits, threat modeling
 
 ### EXAMPLES.md
+
 - **Length:** ~800 lines
 - **Scope:** Working code examples for common scenarios
 - **Audience:** Developers implementing the extension
 - **Best for:** Copy-paste solutions, learning by example
 
 ### API_REFERENCE.md
+
 - **Length:** ~600 lines
 - **Scope:** Complete API reference for all classes and methods
 - **Audience:** Developers needing quick reference
@@ -487,6 +507,7 @@ def test_protected_route(client):
 ## 📅 Version History
 
 **v1.0.0** (February 23, 2026)
+
 - Initial documentation release
 - Comprehensive coverage of all features
 - Security analysis and best practices
@@ -502,6 +523,7 @@ See main project README for license information.
 ---
 
 **Quick Navigation:**
+
 - [Main Documentation](./README.md)
 - [Security Guide](./SECURITY.md)
 - [Code Examples](./EXAMPLES.md)

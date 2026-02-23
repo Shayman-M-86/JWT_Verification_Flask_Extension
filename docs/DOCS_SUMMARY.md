@@ -5,11 +5,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ## 📁 Documentation Files
 
 ### 1. **README.md** (Main Documentation)
+
 - **Size:** ~65 KB
 - **Lines:** ~1,000+
 - **Scope:** Complete guide covering all aspects
 
 **Contents:**
+
 - Overview and architecture
 - Core components (detailed explanations)
 - Security features
@@ -28,11 +30,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 2. **SECURITY.md** (Security Documentation)
+
 - **Size:** ~45 KB
 - **Lines:** ~700+
 - **Scope:** In-depth security analysis
 
 **Contents:**
+
 - Threat model (assets, actors, trust boundaries)
 - Security features explained in detail
 - Attack vectors catalog with mitigations (13 attack types covered)
@@ -47,11 +51,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 3. **EXAMPLES.md** (Code Examples)
+
 - **Size:** ~55 KB
 - **Lines:** ~800+
 - **Scope:** Practical working examples
 
 **Contents:**
+
 - Basic setup variations
 - Authentication examples (Bearer, Cookie, ID token, multiple methods)
 - Authorization examples (RBAC, permissions, resource-specific, dynamic)
@@ -65,11 +71,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 4. **API_REFERENCE.md** (API Reference)
+
 - **Size:** ~40 KB
 - **Lines:** ~600+
 - **Scope:** Complete API documentation
 
 **Contents:**
+
 - Core classes (AuthExtension, JWTVerifier, Auth0JWKSProvider, RBACAuthorizer, etc.)
 - All class methods with signatures, parameters, returns, raises, examples
 - Protocols (TokenVerifier, KeyProvider, Authorizer, CacheStore, Extractor)
@@ -84,11 +92,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 5. **INDEX.md** (Documentation Navigation)
+
 - **Size:** ~25 KB
 - **Lines:** ~400+
 - **Scope:** Documentation navigation and quick access
 
 **Contents:**
+
 - Overview of all documentation files
 - Quick start guides for common scenarios
 - Common tasks with code snippets
@@ -103,11 +113,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 6. **CHANGELOG.md** (Version History)
+
 - **Size:** ~8 KB
 - **Lines:** ~200+
 - **Scope:** Version history and changes
 
 **Contents:**
+
 - Version 1.0.0 release notes
 - All features added in initial release
 - Planned features (unreleased section)
@@ -122,11 +134,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 7. **CONTRIBUTING.md** (Contributor Guide)
+
 - **Size:** ~20 KB
 - **Lines:** ~600+
 - **Scope:** Guidelines for contributors
 
 **Contents:**
+
 - Code of Conduct
 - Getting started (prerequisites, first contributions)
 - Development setup (step-by-step)
@@ -145,11 +159,13 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ---
 
 ### 8. **QUICKREF.md** (Quick Reference Card)
+
 - **Size:** ~8 KB
 - **Lines:** ~250+
 - **Scope:** Quick lookup reference
 
 **Contents:**
+
 - Installation
 - Basic setup (copy-paste ready)
 - Common decorators
@@ -174,6 +190,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ## 📊 Statistics
 
 **Total Documentation:**
+
 - **Files:** 8 comprehensive documents
 - **Total Lines:** ~4,500+ lines
 - **Total Size:** ~270 KB
@@ -181,6 +198,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 - **Coverage:** All aspects of the extension
 
 **Documentation Quality:**
+
 - ✅ Complete API coverage
 - ✅ Comprehensive examples
 - ✅ Security analysis
@@ -195,13 +213,15 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ## 🎯 Documentation Goals Achieved
 
 ### Completeness
+
 - [x] Every public class documented
 - [x] Every public method documented
 - [x] Every parameter explained
 - [x] Every exception documented
 - [x] Every protocol documented
 
-### Quality
+### Quality Standards
+
 - [x] Clear and concise language
 - [x] Working code examples
 - [x] Security considerations
@@ -209,6 +229,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 - [x] Common pitfalls highlighted
 
 ### Accessibility
+
 - [x] Multiple learning paths
 - [x] Navigation index
 - [x] Quick reference card
@@ -216,6 +237,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 - [x] Progressive disclosure (basic → advanced)
 
 ### Practical Value
+
 - [x] Copy-paste ready examples
 - [x] Production deployment guide
 - [x] Troubleshooting guide
@@ -227,7 +249,9 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ## 📚 How to Use This Documentation
 
 ### For New Users
+
 **Recommended Reading Order:**
+
 1. [INDEX.md](./INDEX.md) - Get oriented
 2. [README.md - Overview](./README.md#overview) - Understand what it does
 3. [README.md - Quick Start](./README.md#quick-start) - Get running fast
@@ -235,28 +259,36 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 5. [QUICKREF.md](./QUICKREF.md) - Keep handy for reference
 
 ### For Developers
+
 **Recommended Reading Order:**
+
 1. [README.md - Architecture](./README.md#architecture) - Understand design
 2. [API_REFERENCE.md](./API_REFERENCE.md) - Learn the API
 3. [EXAMPLES.md](./EXAMPLES.md) - Study patterns
 4. [README.md - Advanced Topics](./README.md#advanced-topics) - Extend functionality
 
 ### For Security Engineers
+
 **Recommended Reading Order:**
+
 1. [SECURITY.md - Threat Model](./SECURITY.md#threat-model) - Understand threats
 2. [SECURITY.md - Attack Vectors](./SECURITY.md#attack-vectors--mitigations) - Review mitigations
 3. [SECURITY.md - Security Checklist](./SECURITY.md#security-checklist) - Verify security
 4. [README.md - Security Features](./README.md#security-features) - Deep dive
 
 ### For DevOps/SRE
+
 **Recommended Reading Order:**
+
 1. [README.md - Deployment](./README.md#deployment) - Deploy to production
 2. [README.md - Scaling](./README.md#scaling-considerations) - Scale horizontally
 3. [README.md - Monitoring](./README.md#monitoring-and-observability) - Set up monitoring
 4. [README.md - Troubleshooting](./README.md#troubleshooting) - Handle issues
 
 ### For Contributors
+
 **Recommended Reading Order:**
+
 1. [CONTRIBUTING.md](./CONTRIBUTING.md) - Contribution guidelines
 2. [README.md - Architecture](./README.md#architecture) - Understand codebase
 3. [README.md - Testing](./README.md#testing) - Write tests
@@ -269,7 +301,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ### By Topic
 
 | Topic | Primary Document | Section |
-|-------|------------------|---------|
+| ----- | ---------------- | ------- |
 | Getting Started | README.md | Quick Start |
 | Architecture | README.md | Architecture |
 | API Reference | API_REFERENCE.md | All |
@@ -285,7 +317,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ### By Use Case
 
 | Use Case | Where to Look |
-|----------|---------------|
+| -------- | ------------- |
 | "How do I protect a route?" | README.md Quick Start |
 | "How do I add RBAC?" | README.md With RBAC |
 | "How do I use Redis?" | README.md Deployment |
@@ -300,6 +332,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ## ✅ Documentation Checklist
 
 ### Coverage
+
 - [x] Overview and introduction
 - [x] Architecture explanation
 - [x] Component documentation
@@ -314,6 +347,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 - [x] Navigation/index
 
 ### Quality
+
 - [x] Clear and concise writing
 - [x] Working code examples
 - [x] Screenshots/diagrams (ASCII art)
@@ -324,6 +358,7 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 - [x] Last updated dates
 
 ### Maintenance
+
 - [x] CHANGELOG.md for tracking changes
 - [x] Deprecation policy defined
 - [x] Version numbering explained
@@ -335,18 +370,21 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 ## 🚀 Next Steps
 
 ### For Readers
+
 1. Start with [INDEX.md](./INDEX.md) for navigation
 2. Follow the learning path for your role
 3. Refer to [QUICKREF.md](./QUICKREF.md) as needed
 4. Check [CHANGELOG.md](./CHANGELOG.md) for updates
 
-### For Contributors
+### For Contributors and Developers
+
 1. Read [CONTRIBUTING.md](./CONTRIBUTING.md)
 2. Check [CHANGELOG.md](./CHANGELOG.md) [Unreleased] for planned work
 3. Review code and documentation together
 4. Submit PRs with documentation updates
 
 ### For Maintainers
+
 1. Keep documentation in sync with code
 2. Update [CHANGELOG.md](./CHANGELOG.md) with each release
 3. Review and merge documentation PRs
@@ -363,9 +401,10 @@ This directory contains comprehensive documentation for the JWT Verification Ext
 
 ---
 
-## 🎉 Documentation Complete!
+## 🎉 Documentation Complete
 
 This documentation package provides comprehensive coverage of the JWT Verification Extension, suitable for:
+
 - New users getting started
 - Developers implementing features
 - Security engineers reviewing security

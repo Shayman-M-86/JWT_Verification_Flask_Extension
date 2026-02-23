@@ -152,11 +152,13 @@ We follow [PEP 8](https://www.python.org/dev/peps/pep-0008/) with some modificat
 ### Formatting
 
 **Use Black for code formatting:**
+
 ```bash
 black src/extension/jwt_verification
 ```
 
 **Configuration (.black.toml):**
+
 ```toml
 line-length = 88
 target-version = ['py311']
@@ -165,11 +167,13 @@ target-version = ['py311']
 ### Linting
 
 **Use Ruff for linting:**
+
 ```bash
 ruff check src/extension/jwt_verification
 ```
 
 **Auto-fix issues:**
+
 ```bash
 ruff check --fix src/extension/jwt_verification
 ```
@@ -179,6 +183,7 @@ ruff check --fix src/extension/jwt_verification
 **All code must include type hints:**
 
 ✅ Good:
+
 ```python
 def verify(self, token: str) -> Claims:
     """Verify JWT and return claims."""
@@ -186,6 +191,7 @@ def verify(self, token: str) -> Claims:
 ```
 
 ❌ Bad:
+
 ```python
 def verify(self, token):
     """Verify JWT and return claims."""
@@ -193,6 +199,7 @@ def verify(self, token):
 ```
 
 **Run type checking:**
+
 ```bash
 mypy src/extension/jwt_verification
 ```
@@ -244,17 +251,20 @@ def authorize(
 ### Import Organization
 
 **Order:**
+
 1. Standard library
 2. Third-party libraries
 3. Local application/library
 
 **Use absolute imports:**
+
 ```python
 from jwt_verification import AuthExtension
 from jwt_verification.errors import InvalidToken
 ```
 
 **Format with isort:**
+
 ```bash
 isort src/extension/jwt_verification
 ```
@@ -266,7 +276,8 @@ isort src/extension/jwt_verification
 ### Writing Tests
 
 **Test file structure:**
-```
+
+```text
 tests/
 ├── JWT_verification/
 │   ├── test_auth0_provider.py
@@ -279,6 +290,7 @@ tests/
 ```
 
 **Test naming:**
+
 ```python
 def test_verifier_accepts_valid_token():
     """Test that verifier accepts tokens with valid signature."""
@@ -296,12 +308,14 @@ def test_authorizer_requires_all_permissions_when_configured():
 ### Test Requirements
 
 **Every PR must:**
+
 - Include tests for new features
 - Maintain or improve code coverage
 - Pass all existing tests
 - Include both positive and negative test cases
 
 **Test categories:**
+
 1. **Unit tests** - Test individual components in isolation
 2. **Integration tests** - Test component interactions
 3. **Security tests** - Test attack scenarios and mitigations
@@ -362,6 +376,7 @@ def test_something(verifier):
 - **Critical paths:** 100% coverage required
 
 **Check coverage:**
+
 ```bash
 pytest --cov=src/extension/jwt_verification --cov-report=term-missing
 ```
@@ -398,12 +413,14 @@ pytest --cov=src/extension/jwt_verification --cov-report=term-missing
 ### Documentation Style
 
 **Be clear and concise:**
+
 - Use simple language
 - Provide examples
 - Explain "why" not just "what"
 - Include security considerations
 
 **Code examples must:**
+
 - Be complete and runnable
 - Include imports
 - Show expected output
@@ -416,6 +433,7 @@ pytest --cov=src/extension/jwt_verification --cov-report=term-missing
 ### Before Submitting
 
 **Checklist:**
+
 - [ ] Code follows style guidelines
 - [ ] All tests pass
 - [ ] New tests added for new features
@@ -430,7 +448,7 @@ pytest --cov=src/extension/jwt_verification --cov-report=term-missing
 
 Use conventional commit format:
 
-```
+```text
 type(scope): brief description
 
 Examples:
@@ -442,6 +460,7 @@ refactor(authorizer): simplify permission checking logic
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation only
@@ -531,21 +550,24 @@ What actually happened.
 # Minimal code to reproduce
 ```
 
-**Environment**
+#### Environment
+
 - Python version:
 - Flask version:
 - Extension version:
 - Auth0 tenant (if relevant):
 - OS:
 
-**Error Messages**
-```
+### Error Messages
+
+```Text
 Full error message and stack trace
 ```
 
 **Additional Context**
 Any other relevant information.
-```
+
+```text
 
 ### Security Bugs
 
@@ -594,7 +616,8 @@ How could we avoid that?
 
 **Additional Context**
 Any other relevant information.
-```
+
+```text
 
 ---
 
@@ -640,17 +663,20 @@ All security-related PRs undergo additional review:
 ### Commit Messages
 
 **Format:**
-```
+
+```text
 type(scope): brief description
 
 Longer explanation if needed.
 
 - Bullet points for details
 - Reference issues: Fixes #123
-```
+
+```text
 
 **Examples:**
 ```
+
 feat(auth): add support for EdDSA algorithm
 
 Adds support for Ed25519 signature verification alongside
@@ -665,17 +691,20 @@ Fixes #456
 docs(readme): fix typo in quick start guide
 
 test(cache): add concurrency tests for Redis cache
-```
+
+```text
 
 ### Branch Naming
 
 ```
+
 feature/add-eddsa-support
 fix/cache-race-condition
 docs/improve-security-guide
 test/add-integration-tests
 refactor/simplify-authorizer
-```
+
+```text
 
 ### Code Review Etiquette
 

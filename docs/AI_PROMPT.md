@@ -10,11 +10,12 @@ This document provides comprehensive context for AI assistants working with this
 **Purpose:** Production-ready JWT authentication and authorization for Flask applications
 
 ### Key Principle
+
 The extension is a **reusable library**. The Auth0 demo in `examples/auth0_demo/` is just an example use case - not the main product.
 
 ## Project Structure
 
-```
+```text
 flask-jwt-verification/
 ├── src/jwt_verification/           # Main package (the library)
 │   ├── __init__.py                 # Public API exports
@@ -68,7 +69,7 @@ flask-jwt-verification/
 
 ### Request Flow
 
-```
+```text
 1. HTTP Request with JWT
    ↓
 2. @auth.require(roles=["admin"]) decorator (flask_extension.py)
@@ -93,18 +94,21 @@ flask-jwt-verification/
 ### Core Components
 
 #### 1. AuthExtension (flask_extension.py)
+
 - Entry point for developers
 - `@auth.require(roles=[], permissions=[])` decorator
 - Integrates verifier and authorizer
 - Stores verified JWT in `flask.g.jwt`
 
 #### 2. JWTVerifier (verifier.py)
+
 - Provider-agnostic JWT verification
 - Uses PyJWT for cryptographic validation
 - Validates: signature, issuer, audience, expiration, algorithms
 - Configurable via `JWTVerifyOptions`
 
 #### 3. Auth0JWKSProvider (key_providers/auth0.py)
+
 - Fetches RSA public keys from Auth0 JWKS endpoint
 - Multi-layer caching (InMemory or Redis)
 - Negative caching (prevents repeated failed lookups)
@@ -112,17 +116,20 @@ flask-jwt-verification/
 - Thread-safe
 
 #### 4. RBACAuthorizer (authorization.py)
+
 - Role-based and permission-based access control
 - Extracts roles/permissions from JWT claims
 - Supports both array access and claim mapping
 - Flexible claim structure support
 
 #### 5. Cache Stores (cache_stores.py)
+
 - **InMemoryCache**: For development/single-instance (uses threading.Lock)
 - **RedisCache**: For production/multi-instance (uses Redis)
 - TTL support, negative caching
 
 #### 6. RefreshGate (refresh_gate.py)
+
 - Rate-limits JWKS refresh operations
 - Prevents DoS via malicious `kid` values
 - Thread-safe with Lock
@@ -130,14 +137,18 @@ flask-jwt-verification/
 ## Key Design Patterns
 
 ### Protocol-Based Extensibility
+
 All major components use Python protocols (PEP 544):
+
 - `KeyProvider` - Custom key sources
 - `CacheStore` - Custom cache backends
 - `Authorizer` - Custom authorization logic
 - `TokenExtractor` - Custom token extraction
 
 ### Defense in Depth
+
 Multiple security layers:
+
 1. Signature verification (cryptographic)
 2. Claims validation (issuer, audience, expiration)
 3. Algorithm allowlist (prevent algorithm confusion)
@@ -151,39 +162,46 @@ Multiple security layers:
 
 1. Create file in `src/jwt_verification/key_providers/`
 2. Implement `KeyProvider` protocol:
+
    ```python
    class MyProvider:
        def get_key(self, kid: str) -> str:
            """Return PEM-encoded public key for kid."""
            pass
    ```
+
 3. Add to `key_providers/__init__.py` exports
 4. Add tests in `tests/JWT_verification/test_my_provider.py`
 
 ### Adding a New CacheStore
 
 1. Implement `CacheStore` protocol in `cache_stores.py`:
+
    ```python
    class MyCache:
        def get(self, key: str) -> bytes | None: ...
        def set(self, key: str, value: bytes, ttl_seconds: int) -> None: ...
    ```
+
 2. Add tests in `test_cache_stores.py`
 
 ### Adding a New TokenExtractor
 
 1. Implement `TokenExtractor` protocol in `extractors.py`:
+
    ```python
    class MyExtractor:
        def extract(self, request: Request) -> str | None:
            """Extract JWT from request."""
            pass
    ```
+
 2. Add tests in `test_extractor.py`
 
 ## Import Paths
 
 **Correct imports** (what users should use):
+
 ```python
 from jwt_verification import (
     AuthExtension,
@@ -201,6 +219,7 @@ from jwt_verification import (
 ```
 
 **Internal imports** (within the package):
+
 ```python
 from jwt_verification.verifier import JWTVerifier
 from jwt_verification.flask_extension import AuthExtension
@@ -210,6 +229,7 @@ from jwt_verification.key_providers.auth0 import Auth0JWKSProvider
 ## Dependencies
 
 ### Core
+
 - **Python 3.14+** - Required for modern type hints
 - **flask >=3.0.0** - Web framework
 - **PyJWT[crypto] >=2.8.0** - JWT verification
@@ -217,11 +237,13 @@ from jwt_verification.key_providers.auth0 import Auth0JWKSProvider
 - **cryptography >=41.0.0** - RSA signature verification
 
 ### Optional
+
 - **redis >=5.0.0** - For production caching
 - **auth0-python >=4.7.0** - For examples (OAuth flow)
 - **authlib >=1.3.0** - For examples (OAuth flow)
 
 ### Development
+
 - **pytest >=8.0.0** - Testing
 - **pytest-cov >=4.1.0** - Coverage
 - **ruff >=0.1.0** - Linting
@@ -230,6 +252,7 @@ from jwt_verification.key_providers.auth0 import Auth0JWKSProvider
 ## Testing
 
 ### Run Tests
+
 ```bash
 # All tests
 pytest
@@ -245,6 +268,7 @@ pytest --cov=jwt_verification --cov-report=html
 ```
 
 ### Test Structure
+
 - All tests use pytest
 - Fixtures in `conftest.py`
 - Mocking with `unittest.mock`
@@ -252,12 +276,14 @@ pytest --cov=jwt_verification --cov-report=html
 - 100% coverage goal for critical paths
 
 ### Current Test Status
+
 - **Extension tests**: 37/37 passing ✅
 - **Integration tests**: Removed (were for demo app)
 
 ## Security Considerations
 
 ### What the Extension Protects Against
+
 1. ✅ Invalid signatures (cryptographic verification)
 2. ✅ Expired tokens (exp claim validation)
 3. ✅ Wrong issuer (iss claim validation)
@@ -267,12 +293,14 @@ pytest --cov=jwt_verification --cov-report=html
 7. ✅ DoS via repeated invalid kid (negative caching)
 
 ### What It Doesn't Protect Against
+
 1. ❌ Token theft (use HTTPS, secure cookies)
 2. ❌ Replay attacks (implement token revocation if needed)
 3. ❌ Authorization logic bugs (app's responsibility)
 4. ❌ Network attacks (use TLS, firewall)
 
 ### Best Practices
+
 - Always use HTTPS in production
 - Use Redis for caching in multi-instance deployments
 - Set appropriate TTLs (3600s for keys, 60s for negative cache)
@@ -283,16 +311,19 @@ pytest --cov=jwt_verification --cov-report=html
 ## Code Style
 
 ### Type Hints
+
 - All public APIs fully typed
 - Use Python 3.14+ syntax (e.g., `str | None` not `Optional[str]`)
 - Protocols over ABCs for extensibility
 
 ### Error Handling
+
 - Custom exceptions in `errors.py`
 - Hierarchy: `InvalidToken` (base) → specific errors
 - Always include helpful error messages
 
 ### Logging
+
 - Use `logging.getLogger("jwt_verification")`
 - Log at appropriate levels:
   - DEBUG: Cache hits/misses, verification steps
@@ -301,6 +332,7 @@ pytest --cov=jwt_verification --cov-report=html
   - ERROR: Verification failures, critical errors
 
 ### Naming Conventions
+
 - Classes: `PascalCase`
 - Functions/methods: `snake_case`
 - Constants: `UPPER_SNAKE_CASE`
@@ -309,25 +341,32 @@ pytest --cov=jwt_verification --cov-report=html
 ## Common Pitfalls
 
 ### Import Errors
+
 ❌ **Wrong**: `from src.jwt_verification import AuthExtension`  
 ✅ **Correct**: `from jwt_verification import AuthExtension`
 
 The package is installed as `jwt_verification`, not `src.jwt_verification`.
 
 ### Cache Configuration
+
 ❌ **Wrong**: Using InMemoryCache in production with multiple instances  
 ✅ **Correct**: Use RedisCache for multi-instance deployments
 
 ### Claims Mapping
+
 Auth0 can put roles/permissions in different claim structures:
+
 - Array: `{"permissions": ["read:posts", "write:posts"]}`
 - Namespaced: `{"https://myapp.com/roles": ["admin"]}`
 
 Use `ClaimsMapping` to configure the claim names.
 
 ### Token Extraction
-Default is `BearerExtractor` (Authorization header).  
+
+Default is `BearerExtractor` (Authorization header).
+
 For cookies, explicitly set:
+
 ```python
 auth = AuthExtension(verifier=verifier, extractor=CookieExtractor("access_token"))
 ```
@@ -335,6 +374,7 @@ auth = AuthExtension(verifier=verifier, extractor=CookieExtractor("access_token"
 ## Documentation Guidelines
 
 ### When Adding Features
+
 1. Update main [README.md](README.md) - add to relevant section
 2. Update [API_REFERENCE.md](API_REFERENCE.md) - document new APIs
 3. Add example to [EXAMPLES.md](EXAMPLES.md) - show usage
@@ -343,6 +383,7 @@ auth = AuthExtension(verifier=verifier, extractor=CookieExtractor("access_token"
 6. Update this file (AI_PROMPT.md) if architecture changes
 
 ### Documentation Locations
+
 - **For users**: Main `README.md` and `docs/`
 - **For contributors**: `docs/CONTRIBUTING.md`
 - **For security**: `docs/SECURITY.md`
@@ -351,27 +392,34 @@ auth = AuthExtension(verifier=verifier, extractor=CookieExtractor("access_token"
 ## Troubleshooting
 
 ### "Module not found: jwt_verification"
+
 **Cause**: Package not installed  
 **Fix**: `pip install -e .` from project root
 
 ### "Key not found for kid: xyz123"
-**Cause**: JWKS doesn't have that key ID  
-**Fix**: 
+
+**Cause**: JWKS doesn't have that key ID
+
+**Fix**:
+
 - Check if token is from correct Auth0 tenant
 - Verify issuer URL is correct
 - Check Auth0 signing key rotation
 
 ### "Token has expired"
+
 **Cause**: Token exp claim is in the past  
 **Fix**: Get a new token from Auth0
 
 ### Tests failing with import errors
+
 **Cause**: Test imports still using old path  
 **Fix**: Ensure all test imports use `from jwt_verification import ...`
 
 ## Development Workflow
 
 ### Setup
+
 ```bash
 git clone <repo>
 cd flask-jwt-verification
@@ -381,6 +429,7 @@ pip install -e ".[dev]"
 ```
 
 ### Before Committing
+
 ```bash
 # Run tests
 pytest
@@ -396,6 +445,7 @@ ruff format src/jwt_verification
 ```
 
 ### Release Process
+
 1. Update version in `pyproject.toml`
 2. Update `CHANGELOG.md`
 3. Run full test suite: `pytest`
@@ -417,6 +467,7 @@ The extension itself doesn't use environment variables. These are for the demo a
 ## Quick Reference
 
 ### Minimal Setup
+
 ```python
 from flask import Flask
 from jwt_verification import AuthExtension, Auth0JWKSProvider, JWTVerifier, JWTVerifyOptions
@@ -436,6 +487,7 @@ def protected():
 ```
 
 ### With RBAC
+
 ```python
 from jwt_verification import RBACAuthorizer, ClaimAccess, ClaimsMapping
 

@@ -49,7 +49,7 @@ The extension follows several key design principles:
 
 ### High-Level Request Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │ 1. HTTP Request                                                 │
 │    Authorization: Bearer <JWT>                                  │
@@ -112,7 +112,7 @@ The extension follows several key design principles:
 
 ### Component Diagram
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────┐
 │                        Flask Application                         │
 └───────────────────────────┬──────────────────────────────────────┘
@@ -164,6 +164,7 @@ The extension follows several key design principles:
 **Purpose**: Flask integration layer that orchestrates authentication and authorization.
 
 **Responsibilities**:
+
 - Apply JWT verification to Flask routes via decorators
 - Extract tokens from requests
 - Coordinate verification and authorization
@@ -171,10 +172,12 @@ The extension follows several key design principles:
 - Store verified claims in `flask.g.jwt`
 
 **Key Methods**:
+
 - `require(permissions=..., roles=..., require_all_permissions=True)`: Decorator factory for protecting routes
 - `init_app(app, ...)`: Flask application factory pattern support
 
 **Example**:
+
 ```python
 from jwt_verification import AuthExtension
 
@@ -195,12 +198,14 @@ def admin_endpoint():
 **Purpose**: Provider-agnostic JWT signature and claims verification.
 
 **Responsibilities**:
+
 - Parse JWT header to extract `kid` (key ID)
 - Obtain signing key from KeyProvider
 - Verify signature using PyJWT
 - Validate standard claims (issuer, audience, expiration)
 
 **Configuration**:
+
 ```python
 from jwt_verification import JWTVerifier, JWTVerifyOptions
 
@@ -214,6 +219,7 @@ verifier = JWTVerifier(key_provider=key_provider, options=options)
 ```
 
 **Security Notes**:
+
 - Never trusts the `alg` field from the token header (prevents algorithm confusion attacks)
 - Validates `iss` and `aud` to ensure tokens are intended for your API
 - Converts all JWT library exceptions to domain-specific errors
@@ -225,6 +231,7 @@ verifier = JWTVerifier(key_provider=key_provider, options=options)
 **Purpose**: Resolve JWT signing keys from Auth0's JWKS endpoint with intelligent caching and DoS protection.
 
 **Responsibilities**:
+
 - Fetch and cache signing keys from Auth0
 - Implement negative caching for unknown key IDs
 - Rate-limit JWKS refresh operations
@@ -250,6 +257,7 @@ verifier = JWTVerifier(key_provider=key_provider, options=options)
    - Cache result (positive or negative)
 
 **Configuration**:
+
 ```python
 from jwt_verification import Auth0JWKSProvider, InMemoryCache
 
@@ -264,6 +272,7 @@ provider = Auth0JWKSProvider(
 ```
 
 **Attack Mitigation**:
+
 - **Random `kid` Spam**: Negative caching makes repeated invalid requests O(1)
 - **Refresh Amplification**: RefreshGate limits outbound JWKS fetches
 - **Cache Bypass**: All resolution paths enforce caching
@@ -275,12 +284,14 @@ provider = Auth0JWKSProvider(
 **Purpose**: Enforce role-based and permission-based access control.
 
 **Responsibilities**:
+
 - Extract roles and permissions from JWT claims
 - Validate user has required roles
 - Validate user has required permissions (all or any)
 - Raise `Forbidden` error on authorization failure
 
 **Configuration**:
+
 ```python
 from jwt_verification import (
     RBACAuthorizer,
@@ -300,12 +311,14 @@ authorizer = RBACAuthorizer(claims_access)
 ```
 
 **Authorization Logic**:
+
 - **Roles**: User must have at least ONE of the required roles
 - **Permissions**:
   - If `require_all_permissions=True`: User must have ALL required permissions
   - If `require_all_permissions=False`: User must have at least ONE required permission
 
 **Example**:
+
 ```python
 # User must be admin OR moderator AND have both permissions
 @auth.require(
@@ -326,17 +339,20 @@ def edit_post():
 **Purpose**: Simple in-process cache for development and single-instance deployments.
 
 **Features**:
+
 - Thread-safe with locking
 - TTL-based expiration
 - Supports negative caching
 - Lazy expiration (on access)
 
 **Limitations**:
+
 - Not shared across processes/containers
 - Lost on application restart
 - Not suitable for horizontal scaling
 
 **Use Cases**:
+
 - Local development
 - Single-server deployments
 - Testing
@@ -346,12 +362,14 @@ def edit_post():
 **Purpose**: Distributed cache for production multi-instance deployments.
 
 **Features**:
+
 - Shared across all application instances
 - Leverages Redis TTL for automatic expiration
 - Supports negative caching
 - Persistent across restarts
 
 **Configuration**:
+
 ```python
 import redis
 from jwt_verification import RedisCache
@@ -367,6 +385,7 @@ cache = RedisCache(redis_client)
 ```
 
 **Serialization**:
+
 - Stores PyJWK objects as JSON
 - Uses `kid` as Redis key
 - Negative cache entries stored with `{"__missing__": True}`
@@ -380,11 +399,13 @@ cache = RedisCache(redis_client)
 **Purpose**: Extract JWT from `Authorization` header.
 
 **Expected Format**:
-```
+
+```text
 Authorization: Bearer <JWT>
 ```
 
 **Behavior**:
+
 - Raises `MissingToken` if header is missing or malformed
 - Strips whitespace from token
 
@@ -393,6 +414,7 @@ Authorization: Bearer <JWT>
 **Purpose**: Extract JWT from HTTP cookie.
 
 **Configuration**:
+
 ```python
 from jwt_verification import CookieExtractor
 
@@ -401,6 +423,7 @@ auth = AuthExtension(verifier=verifier, extractor=extractor)
 ```
 
 **Use Cases**:
+
 - Single-page applications (SPAs) with same-site APIs
 - Scenarios where localStorage is undesirable
 - CSRF protection required (use with SameSite cookies)
@@ -412,12 +435,14 @@ auth = AuthExtension(verifier=verifier, extractor=extractor)
 **Purpose**: Rate-limit JWKS refresh operations to prevent DoS attacks.
 
 **Mechanism**:
+
 - Allows at most one refresh per `min_interval` seconds
 - Thread-safe with locking
 - Tracks denied attempts
 - Optional alerting at threshold
 
 **Configuration**:
+
 ```python
 from jwt_verification import RefreshGate
 
@@ -428,7 +453,9 @@ gate = RefreshGate(
 ```
 
 **Security Rationale**:
+
 An attacker sending JWTs with random `kid` values could force your service to repeatedly fetch JWKS from Auth0, causing:
+
 - Outbound request amplification
 - Auth0 rate-limiting
 - Service degradation
@@ -448,12 +475,15 @@ RefreshGate ensures forced refreshes happen at a controlled rate.
 ### 2. Claims Validation
 
 **What**: Enforces issuer, audience, and expiration checks.
-**Prevents**: 
+
+**Prevents**:
+
 - Token reuse across services (audience)
 - Accepting tokens from untrusted issuers
 - Use of expired tokens
 
 **Configuration**:
+
 ```python
 JWTVerifyOptions(
     issuer="https://your-tenant.auth0.com/",  # MUST match token
@@ -483,6 +513,7 @@ JWTVerifyOptions(
 ### 6. Defense in Depth
 
 Multiple layers of protection:
+
 1. **Extractor**: Validates token format
 2. **Verifier**: Validates signature and claims
 3. **Authorizer**: Validates roles and permissions
@@ -492,6 +523,7 @@ Multiple layers of protection:
 ### 7. Secure Defaults
 
 The extension is secure by default:
+
 - Requires explicit issuer and audience
 - Uses strong algorithms (RS256)
 - Enables all claim validations
@@ -1313,6 +1345,7 @@ verifier = JWTVerifier(
 ### Docker Deployment
 
 **docker-compose.yml**:
+
 ```yaml
 version: '3.8'
 
@@ -1431,6 +1464,7 @@ def verify_with_metrics(token):
 **Cause**: Key provider cannot find signing key for `kid`.
 
 **Solutions**:
+
 - Verify `issuer` matches exactly (including trailing slash)
 - Check Auth0 JWKS endpoint is accessible
 - Verify token's `kid` exists in JWKS
@@ -1442,6 +1476,7 @@ def verify_with_metrics(token):
 **Cause**: Authorization header missing or malformed.
 
 **Solutions**:
+
 - Verify client sends `Authorization: Bearer <token>`
 - Check for extra whitespace or typos
 - Ensure token is not in cookie (use CookieExtractor if needed)
@@ -1451,6 +1486,7 @@ def verify_with_metrics(token):
 **Cause**: Token signature doesn't match public key.
 
 **Solutions**:
+
 - Verify `issuer` configuration matches token's `iss` claim
 - Check for key rotation (wait for cache expiry or force refresh)
 - Ensure token is from correct Auth0 tenant
@@ -1461,6 +1497,7 @@ def verify_with_metrics(token):
 **Cause**: Token's `exp` claim is in the past.
 
 **Solutions**:
+
 - Client needs to refresh token using refresh token
 - Check for clock drift between servers
 - Verify token lifetime settings in Auth0
@@ -1470,6 +1507,7 @@ def verify_with_metrics(token):
 **Cause**: RefreshGate preventing frequent JWKS fetches.
 
 **Solutions**:
+
 - This is expected during attacks—wait for `min_interval` to pass
 - If legitimate: reduce `min_interval` (but increases DoS risk)
 - Investigate source of invalid `kid` values
@@ -1479,6 +1517,7 @@ def verify_with_metrics(token):
 **Cause**: User lacks required roles or permissions.
 
 **Solutions**:
+
 - Verify user has correct roles in Auth0
 - Check RBAC is enabled in Auth0 API settings
 - Verify permissions are included in access token
@@ -1762,6 +1801,7 @@ logger.info(f"Verifying token for user: {claims.get('sub')}")
 ### 2. Use Short Token Lifetimes
 
 Configure Auth0 for:
+
 - Access tokens: 15 minutes - 1 hour
 - Refresh tokens: 7-30 days
 - ID tokens: 1 hour
@@ -1794,6 +1834,7 @@ cache = RedisCache(redis_client)
 ### 5. Monitor and Alert
 
 Set up alerts for:
+
 - Spike in 401 errors
 - Spike in 403 errors
 - JWKS refresh throttling
@@ -1814,6 +1855,7 @@ except InvalidToken:
 ### 7. Test Token Rotation
 
 Regularly test Auth0 key rotation:
+
 - Force rotation in Auth0 dashboard
 - Verify new tokens work immediately
 - Verify old tokens continue working during overlap
@@ -1877,6 +1919,7 @@ Token claims structure:
 ### Q: How do I handle token refresh?
 
 **A:** Token refresh is a client-side responsibility. Clients should:
+
 1. Detect 401 response
 2. Use refresh token to get new access token from Auth0
 3. Retry request with new access token
@@ -1884,6 +1927,7 @@ Token claims structure:
 ### Q: What happens during Auth0 key rotation?
 
 **A:** The extension handles rotation seamlessly:
+
 - Both old and new keys are in JWKS
 - Cached keys continue to work
 - New tokens use new key (cache miss → fetch → success)
@@ -1906,6 +1950,7 @@ def custom_unauthorized(e):
 ### Q: What's the performance impact?
 
 **A:** Minimal with caching:
+
 - First request: JWKS fetch (~100ms)
 - Cached requests: ~1-5ms per verification
 - Redis adds ~1-2ms overhead
@@ -1917,6 +1962,7 @@ def custom_unauthorized(e):
 ### Q: How do I handle users with dynamic permissions?
 
 **A:** Permissions are cached in the JWT. To revoke access:
+
 1. Update permissions in Auth0
 2. Wait for current tokens to expire
 3. For immediate revocation: implement token blacklist (requires state management)
@@ -1934,6 +1980,7 @@ This extension is part of the auth0_Flask project. See the main project README f
 ## Contributing
 
 Contributions are welcome! Please ensure:
+
 - All tests pass
 - Code is typed with mypy
 - Documentation is updated
@@ -1942,6 +1989,7 @@ Contributions are welcome! Please ensure:
 ## Support
 
 For issues or questions:
+
 1. Check this documentation
 2. Review closed issues on GitHub
 3. Open a new issue with detailed reproduction steps
