@@ -8,7 +8,7 @@ from typing import Any
 
 from flask import Flask, g
 
-import src.extension.JWT_verification as m
+import src.extension.jwt_verification as m
 
 
 class OkVerifier(m.TokenVerifier):

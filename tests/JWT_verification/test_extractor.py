@@ -1,7 +1,7 @@
 import pytest
 from flask import Flask
 
-from src.extension.JWT_verification import BearerExtractor, MissingToken
+from src.extension.jwt_verification import BearerExtractor, MissingToken
 
 
 def test_bearer_extractor_missing(app: Flask):

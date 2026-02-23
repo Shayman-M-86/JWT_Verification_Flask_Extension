@@ -1,6 +1,16 @@
-from src.extension.JWT_verification import AuthExtension, InMemoryCache, JWTVerifier, Auth0JWKSProvider, JWTVerifyOptions, CookieExtractor
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+
+from src.extension.jwt_verification import (
+    Auth0JWKSProvider,
+    AuthExtension,
+    CookieExtractor,
+    InMemoryCache,
+    JWTVerifier,
+    JWTVerifyOptions,
+)
+
 load_dotenv()
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 issuer = f"https://{AUTH0_DOMAIN}/"
@@ -24,6 +34,3 @@ id_opts = JWTVerifyOptions(
 
 key_provider = Auth0JWKSProvider(issuer=issuer, cache=InMemoryCache())
 id_token_verifier = JWTVerifier(key_provider, id_opts)
-
-
-

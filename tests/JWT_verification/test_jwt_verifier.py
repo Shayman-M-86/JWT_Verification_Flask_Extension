@@ -1,9 +1,11 @@
-import pytest
 from typing import Any, cast
 
-import src.extension.JWT_verification as m
-from jwt import PyJWK
+import jwt
+import pytest
 from _pytest.monkeypatch import MonkeyPatch
+from jwt import PyJWK
+
+import src.extension.jwt_verification as m
 
 
 class DummyProvider:
@@ -29,7 +31,7 @@ def test_jwtverifier_reads_kid_and_calls_keyprovider(monkeypatch: MonkeyPatch):
         m.JWTVerifyOptions(issuer="iss", audience="aud", algorithms=("RS256",)),
     )
 
-    monkeypatch.setattr(m.jwt, "get_unverified_header", lambda _t: {"kid": "kid123"})  # type: ignore
+    monkeypatch.setattr(jwt, "get_unverified_header", lambda _t: {"kid": "kid123"})  # type: ignore
 
     def fake_decode(*args: Any, **kwargs: Any):
         # jwt.decode(token, key, algorithms=[...], audience=..., issuer=...)
@@ -42,7 +44,7 @@ def test_jwtverifier_reads_kid_and_calls_keyprovider(monkeypatch: MonkeyPatch):
         assert kwargs["issuer"] == "iss"
         return {"sub": "u1"}
 
-    monkeypatch.setattr(m.jwt, "decode", fake_decode)
+    monkeypatch.setattr(jwt, "decode", fake_decode)
 
     claims = verifier.verify("TOKEN")
     assert claims["sub"] == "u1"
@@ -58,7 +60,7 @@ def test_jwtverifier_missing_kid(monkeypatch: MonkeyPatch):
         m.JWTVerifyOptions(issuer=None, audience=None),
     )
 
-    monkeypatch.setattr(m.jwt, "get_unverified_header", lambda: {})  # type: ignore # no kid
+    monkeypatch.setattr(jwt, "get_unverified_header", lambda: {})  # type: ignore # no kid
 
     with pytest.raises(m.InvalidToken):
         verifier.verify("TOKEN")
@@ -73,12 +75,12 @@ def test_jwtverifier_expired_maps_to_domain_error(monkeypatch: MonkeyPatch):
         m.JWTVerifyOptions(issuer=None, audience=None),
     )
 
-    monkeypatch.setattr(m.jwt, "get_unverified_header", lambda _t: {"kid": "k1"}) # type: ignore
+    monkeypatch.setattr(jwt, "get_unverified_header", lambda _t: {"kid": "k1"})  # type: ignore
 
     def fake_decode(*args: Any, **kwargs: Any):
-        raise m.jwt.ExpiredSignatureError("expired")
+        raise jwt.ExpiredSignatureError("expired")
 
-    monkeypatch.setattr(m.jwt, "decode", fake_decode)
+    monkeypatch.setattr(jwt, "decode", fake_decode)
 
     with pytest.raises(m.ExpiredToken):
         verifier.verify("TOKEN")
@@ -93,12 +95,12 @@ def test_jwtverifier_invalid_maps_to_domain_error(monkeypatch: MonkeyPatch):
         m.JWTVerifyOptions(issuer=None, audience=None),
     )
 
-    monkeypatch.setattr(m.jwt, "get_unverified_header", lambda _t: {"kid": "k1"})  # type: ignore
+    monkeypatch.setattr(jwt, "get_unverified_header", lambda _t: {"kid": "k1"})  # type: ignore
 
     def fake_decode(*args: Any, **kwargs: Any):
-        raise m.jwt.InvalidTokenError("bad")
+        raise jwt.InvalidTokenError("bad")
 
-    monkeypatch.setattr(m.jwt, "decode", fake_decode)
+    monkeypatch.setattr(jwt, "decode", fake_decode)
 
     with pytest.raises(m.InvalidToken):
         verifier.verify("TOKEN")

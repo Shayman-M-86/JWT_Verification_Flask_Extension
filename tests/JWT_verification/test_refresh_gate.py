@@ -1,6 +1,7 @@
 import pytest
 
-import src.extension.JWT_verification as m
+import src.extension.jwt_verification as m
+from src.extension.jwt_verification import refresh_gate
 
 
 def test_refresh_gate_allows_first(monkeypatch: pytest.MonkeyPatch):
@@ -8,7 +9,7 @@ def test_refresh_gate_allows_first(monkeypatch: pytest.MonkeyPatch):
     gate = m.RefreshGate(min_interval=10.0)
 
     t = 1000.0
-    monkeypatch.setattr(m.time, "time", lambda: t)
+    monkeypatch.setattr(refresh_gate.time, "time", lambda: t)
 
     assert gate.allow() is True
     assert gate.allow() is False  # same time -> blocked
@@ -19,7 +20,7 @@ def test_refresh_gate_allows_after_interval(monkeypatch: pytest.MonkeyPatch):
     gate = m.RefreshGate(min_interval=10.0)
 
     time_val = [1000.0]  # use list to allow modification
-    monkeypatch.setattr(m.time, "time", lambda: time_val[0])
+    monkeypatch.setattr(refresh_gate.time, "time", lambda: time_val[0])
 
     assert gate.allow() is True
 
@@ -35,7 +36,7 @@ def test_refresh_gate_respects_alert_threshold(monkeypatch: pytest.MonkeyPatch):
     gate = m.RefreshGate(min_interval=10.0, alert_threshold=3)
 
     time_val = [1000.0]
-    monkeypatch.setattr(m.time, "time", lambda: time_val[0])
+    monkeypatch.setattr(refresh_gate.time, "time", lambda: time_val[0])
 
     # First allow succeeds
     assert gate.allow() is True
@@ -55,7 +56,7 @@ def test_refresh_gate_thread_safe(monkeypatch: pytest.MonkeyPatch):
     gate = m.RefreshGate(min_interval=10.0)
 
     time_val = [1000.0]
-    monkeypatch.setattr(m.time, "time", lambda: time_val[0])
+    monkeypatch.setattr(refresh_gate.time, "time", lambda: time_val[0])
 
     assert gate.allow() is True
     assert gate.allow() is False

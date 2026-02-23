@@ -7,8 +7,7 @@ Tests the JWKS fetching, caching, and refresh logic.
 import pytest
 from jwt import PyJWK, PyJWKClient
 
-
-import src.extension.JWT_verification as m
+import src.extension.jwt_verification as m
 
 
 class DummyJwk(PyJWK):
