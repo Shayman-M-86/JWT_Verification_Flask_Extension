@@ -1,14 +1,15 @@
 from __future__ import annotations
+
+import json
+import threading
+import time
 from dataclasses import dataclass
 from functools import wraps
 from typing import Any, Callable, FrozenSet, Mapping, Optional, Protocol, Sequence, cast
 
 import jwt
-from flask import abort, g, request, Flask
-from jwt import PyJWKClient, PyJWK
-import json
-import threading
-import time
+from flask import Flask, abort, g, request
+from jwt import PyJWK, PyJWKClient
 
 """
 Auth module: JWT verification + key resolution (Auth0 JWKS) + optional RBAC enforcement.
@@ -39,7 +40,6 @@ Security notes
 - Throttle JWKS refresh attempts so attackers cannot DoS you by sending random `kid`s.
 
 """
-
 
 
 # ============================================================
@@ -78,6 +78,8 @@ class CacheStore(Protocol):
 
     def get(self, kid: str) -> PyJWK | None: ...
     def set(self, key: PyJWK, ttl_seconds: int) -> None: ...
+    def set_missing(self, kid: str, ttl_seconds: int) -> None: ...
+    def is_missing(self, kid: str) -> bool: ...
 
 
 class KeyProvider(Protocol):
@@ -108,12 +110,15 @@ class Authorizer(Protocol):
         require_all_permissions: bool,
     ) -> None: ...
 
+
 class Extractor(Protocol):
     """
     Extracts the raw JWT from a Flask request.
     """
+
     def extract(self) -> str: ...
-        
+
+
 # ============================================================
 # Errors (domain exceptions)
 # ============================================================
@@ -188,11 +193,9 @@ class JWTVerifyOptions:
         Allowed algorithms (explicit allowlist). Avoid trusting the token header.
     """
 
-    issuer: Optional[str] 
+    issuer: Optional[str]
     audience: Optional[str]
     algorithms: tuple[str, ...] = ("RS256",)
-    
-    
 
 
 class JWTVerifier(TokenVerifier):
@@ -209,7 +212,11 @@ class JWTVerifier(TokenVerifier):
     - JWKS refresh policies / throttling
     """
 
-    def __init__(self, key_provider: KeyProvider, options: JWTVerifyOptions, ) -> None:
+    def __init__(
+        self,
+        key_provider: KeyProvider,
+        options: JWTVerifyOptions,
+    ) -> None:
         self._keys = key_provider
         self._opt = options
 
@@ -236,40 +243,16 @@ class JWTVerifier(TokenVerifier):
                 audience=self._opt.audience,
                 issuer=self._opt.issuer,
             )
+
         except jwt.ExpiredSignatureError as e:
             raise ExpiredToken from e
         except jwt.InvalidTokenError as e:
-            raise InvalidToken from e
+            raise InvalidToken(f"decode error: {e}") from e
 
 
 # ============================================================
 # RefreshGate (anti-refresh DoS)
 # ============================================================
-
-
-@dataclass(frozen=True, slots=True)
-class RefreshGateOptions:
-    """
-    Controls how often the system is allowed to attempt a "fresh key" retrieval.
-
-    min_interval_seconds:
-        Minimum time between allowed refresh attempts.
-        Prevents an attacker from forcing repeated JWKS requests with random kids.
-
-    alert_threshold:
-        Number of denied refresh attempts before you might want to log/alert.
-
-    max_refresh_attempts:
-        How many times key resolution should loop (allows "wait and retry" behavior).
-
-    refresh_time_delay:
-        Delay between retries when refresh is not allowed (or when allowing time for other workers to refresh).
-    """
-
-    min_interval_seconds: float = 60.0
-    alert_threshold: int = 5
-    max_refresh_attempts: int = 3
-    refresh_time_delay: float = 0.5
 
 
 class RefreshGate:
@@ -282,16 +265,13 @@ class RefreshGate:
     - when enough denials occur, you can log/alert (hook left as a placeholder)
     """
 
-    def __init__(self, options: RefreshGateOptions = RefreshGateOptions()) -> None:
-        self._min_interval = options.min_interval_seconds
-        self._alert_threshold = options.alert_threshold
-        self._max_refresh_attempts = options.max_refresh_attempts
-        self._refresh_time_delay = options.refresh_time_delay
+    def __init__(self, min_interval: float = 60.0, alert_threshold: int = 40) -> None:
+        self._min_interval = min_interval
+        self._alert_threshold = alert_threshold
 
         self._lock = threading.Lock()
         self._next_allowed_at: float = 0.0
         self._retry_attempts: int = 0
-        
 
     def allow(self) -> bool:
         now = time.time()
@@ -308,17 +288,6 @@ class RefreshGate:
             self._next_allowed_at = now + self._min_interval
             self._retry_attempts = 0
             return True
-        
-    def allow_retry(self) -> bool:
-        for _ in range(self._max_refresh_attempts):
-            if not self.allow():
-                # Not allowed to refresh right now; fail-fast is also acceptable,
-                # but a short sleep can reduce noisy transient misses in multi-worker situations.
-                time.sleep(self._refresh_time_delay)
-                continue
-            else:
-                return True
-        return False
 
 
 # ============================================================
@@ -328,69 +297,167 @@ class RefreshGate:
 
 class Auth0JWKSProvider(KeyProvider):
     """
-    Resolves keys from Auth0's JWKS endpoint.
+    Resolves JWT signing keys from an Auth0 JWKS endpoint with caching and
+    refresh throttling.
 
-    - Uses PyJWKClient to fetch/parse JWKS and locate keys by kid.
-    - Adds an explicit CacheStore so your app controls caching policy/storage.
-    - Uses RefreshGate to throttle repeated refresh attempts (anti-DoS).
+    Responsibilities
+    ----------------
+    1. Resolve the correct signing key for a given `kid`.
+    2. Cache resolved keys locally to avoid repeated lookups.
+    3. Negative-cache unknown `kid` values to make attacker traffic cheap.
+    4. Rate-limit forced JWKS refresh operations to prevent outbound DoS.
+    5. Provide a clean abstraction over PyJWKClient for application code.
 
-    Notes:
-    - PyJWKClient already caches JWKS internally when cache_jwk_set=True.
-      You are adding an additional layer (CacheStore) for:
-        - per-kid caching
-        - multi-instance caching (Redis)
-        - custom TTL behavior
+    Resolution Strategy
+    -------------------
+    For each requested `kid`:
+
+    1) Cache lookup (fast path)
+        - If key is cached → return immediately.
+
+    2) Normal resolution
+        - Attempt `PyJWKClient.get_signing_key(kid)`
+        - PyJWT may internally refresh once if the key is missing.
+
+    3) Negative caching
+        - If resolution fails, the `kid` is cached as "missing" for a short TTL.
+        - Prevents repeated expensive lookups for attacker-provided random keys.
+
+    4) Forced refresh (rate-limited)
+        - If still unresolved and the RefreshGate allows:
+              fetch JWKS with refresh=True
+              retry resolution once
+        - If throttled, fail fast.
+
+    5) Failure
+        - Raises InvalidToken if key cannot be resolved.
+
+    Security Properties
+    -------------------
+    Protects against:
+        - Random `kid` spam attacks
+        - Outbound JWKS request amplification
+        - Cache bypass attempts
+
+    Maintains compatibility with:
+        - Legitimate key rotation
+        - Auth0 JWKS updates
+        - Short-lived cache invalidation
+
+    Parameters
+    ----------
+    issuer : str
+        Issuer base URL (e.g., "https://tenant.auth0.com/").
+        JWKS URL is derived as `{issuer}.well-known/jwks.json`.
+
+    cache : CacheStore
+        Cache implementation for resolved keys.
+        May support negative caching via `set_missing`.
+
+    ttl_seconds : int
+        TTL for successfully resolved signing keys.
+
+    missing_ttl_seconds : int
+        TTL for negative cache entries (unknown kids).
+
+    min_interval : float
+        Minimum interval between forced JWKS refresh attempts.
+
+    alert_threshold : int
+        Denial threshold before optional alerting in RefreshGate.
+
+    Notes
+    -----
+    - PyJWKClient already caches the JWKS set internally.
+      This provider adds:
+          • per-kid caching
+          • negative caching
+          • refresh throttling
+          • multi-store compatibility
+
+    - RefreshGate operates per process.
+      For horizontally scaled systems, consider distributed coordination.
+
+    - Negative caching dramatically reduces attacker impact by converting
+      repeated invalid `kid` attempts into constant-time failures.
+
+    Example
+    -------
+    provider = Auth0JWKSProvider(
+        issuer="https://example.auth0.com/",
+        cache=InMemoryCache(),
+    )
+
+    key = provider.get_key_for_token(kid)
     """
 
     def __init__(
         self,
         issuer: str,
-        cache: CacheStore,
+        cache: InMemoryCache,  # or CacheStore + optional set_missing
         ttl_seconds: int = 600,
-        Gate: RefreshGate = RefreshGate()
+        missing_ttl_seconds: int = 30,
+        min_interval: float = 60.0,
+        alert_threshold: int = 40,
     ) -> None:
-        jwks_url = f"{issuer}.well-known/jwks.json"
-
+        self._ttl = ttl_seconds
+        self._missing_ttl = missing_ttl_seconds
+        self._cache = cache
+        self._gate = RefreshGate(
+            min_interval=min_interval, alert_threshold=alert_threshold
+        )
         self._client = PyJWKClient(
-            jwks_url,
+            f"{issuer}.well-known/jwks.json",
             cache_jwk_set=True,
             lifespan=ttl_seconds,
         )
-        self._cache = cache
-        self._gate = Gate
-        
 
     def get_key_for_token(self, kid: str) -> PyJWK:
-        """
-        Resolve the PyJWK for a given `kid`.
+        cached = self._cache.get(kid)
 
-        Strategy:
-        1) Check CacheStore (fast path).
-        2) Try to resolve via PyJWKClient.
-        3) If throttled, briefly sleep and retry (bounded attempts).
-        4) Cache and return key on success.
-        5) Raise InvalidToken if key cannot be resolved.
+        # If you implement set_missing(), cached may be None meaning "known missing"
+        if cached is None and kid in getattr(self._cache, "_store", {}):
+            # known missing (in-memory example); for a real CacheStore add explicit API
+            raise InvalidToken("Unknown kid (cached)")
 
-        Important: This method should not loop indefinitely.
-        """
-        jwk = self._cache.get(kid)
-        if jwk:
+        if cached:
+            return cached
+
+        # 1) Try normal resolution (PyJWT may refresh-on-miss internally once)
+        try:
+            jwk = self._client.get_signing_key(kid)
+            self._cache.set(jwk, ttl_seconds=self._ttl)
             return jwk
+        except Exception:
+            # negative-cache this kid to make spam cheap
+            if hasattr(self._cache, "set_missing"):
+                self._cache.set_missing(kid, ttl_seconds=self._missing_ttl)
 
-        # Bounded retry loop: helps when multiple workers race or when a refresh is happening elsewhere.
-        if self._gate.allow_retry():
-            # Fetch/resolve key by kid
-                jwk = self._client.get_signing_key(kid=kid)  # ty:ignore[missing-argument]
-            # Cache it for future lookups
-                self._cache.set(jwk, ttl_seconds=600)
-                return jwk
-        else:
-            raise InvalidToken("Unable to resolve key after refresh attempt")
+        # 2) Optional forced refresh, but rate-limited
+        if not self._gate.allow():
+            raise InvalidToken("Key refresh throttled")
+
+        # Force refresh of JWKS set, then retry once
+        try:
+            self._client.get_signing_keys(refresh=True)  # forces JWKS fetch
+            jwk = self._client.get_signing_key(kid)
+            self._cache.set(jwk, ttl_seconds=self._ttl)
+            return jwk
+        except Exception as e:
+            if hasattr(self._cache, "set_missing"):
+                self._cache.set_missing(kid, ttl_seconds=self._missing_ttl)
+            raise InvalidToken("Unable to resolve signing key") from e
 
 
 # ============================================================
 # Cache stores
 # ============================================================
+
+
+@dataclass
+class _CacheItem:
+    value: PyJWK | None  # None means "known-missing"
+    expires_at: float
 
 
 class InMemoryCache(CacheStore):
@@ -409,22 +476,37 @@ class InMemoryCache(CacheStore):
     """
 
     def __init__(self) -> None:
-        self._store: dict[str, PyJWK] = {}
+        self._store: dict[str, _CacheItem] = {}
 
     def get(self, kid: str) -> Optional[PyJWK]:
-        return self._store.get(kid)
+        item = self._store.get(kid)
+        if not item:
+            return None
+        if time.time() >= item.expires_at:
+            self._store.pop(kid, None)
+            return None
+        return item.value  # may be None (known-missing)
 
     def set(self, key: PyJWK, ttl_seconds: int) -> None:
-        try:
-            kid = key.key_id
-            if kid is None:
-                raise ValueError("Key must have a key_id (kid) to be cached")
-            self._store[kid] = key
-        except Exception as e:
-            raise RuntimeError("Failed to set cache") from e
+        kid = key.key_id
+        if not kid:
+            raise ValueError("Key must have kid")
+        self._store[kid] = _CacheItem(value=key, expires_at=time.time() + ttl_seconds)
+
+    def set_missing(self, kid: str, ttl_seconds: int) -> None:
+        self._store[kid] = _CacheItem(value=None, expires_at=time.time() + ttl_seconds)
+
+    def is_missing(self, kid: str) -> bool:
+        item = self._store.get(kid)
+        if not item:
+            return False
+        if time.time() >= item.expires_at:
+            self._store.pop(kid, None)
+            return False
+        return item.value is None  # known-missing if value is None
 
 
-class redisCache(CacheStore):
+class RedisCache(CacheStore):
     """
     Redis-backed cache store.
 
@@ -562,6 +644,7 @@ class RBACAuthorizer(Authorizer):
 
 _EXT_KEY = "auth_extension"
 
+
 class AuthExtension:
     """
     Flask decorator glue.
@@ -663,3 +746,24 @@ class AuthExtension:
             return wrapper
 
         return decorator
+
+
+def get_verified_id_claims(
+    verifier: TokenVerifier,
+    *,
+    cookie_name: str = "id_token",
+) -> Claims:
+    """
+    Return verified ID-token claims from the current Flask request.
+
+    - Extracts ID token from cookie (default "id_token")
+    - Verifies signature + issuer + audience
+    - Returns decoded claims
+
+    Raises:
+        MissingToken, ExpiredToken, InvalidToken
+    """
+    token = request.cookies.get(cookie_name)
+    if not token:
+        raise MissingToken("Missing id_token cookie")
+    return verifier.verify(token)

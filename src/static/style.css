@@ -665,6 +665,12 @@ h3 {
     margin-bottom: 1.5rem;
 }
 
+.profile-details-section h3:not(:first-of-type) {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .profile-details-section h4 {
     color: #cbd5e0;
     font-size: 1.1rem;
@@ -678,7 +684,7 @@ h3 {
 
 .detail-item {
     display: grid;
-    grid-template-columns: 140px 1fr;
+    grid-template-columns: 180px 1fr;
     gap: 1rem;
     padding: 0.75rem;
     background-color: #1a1e27;
@@ -702,6 +708,14 @@ h3 {
     white-space: nowrap;
 }
 
+.timestamp-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: #718096;
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
 .permissions-section {
     margin-top: 2rem;
     padding-top: 1.5rem;
@@ -721,6 +735,12 @@ h3 {
     border-radius: 8px;
     font-size: 0.9rem;
     border: 1px solid rgba(99, 179, 237, 0.3);
+}
+
+.role-badge {
+    background-color: #1a1e27;
+    color: #9f7aea;
+    border: 1px solid rgba(159, 122, 234, 0.3);
 }
 
 .token-info {

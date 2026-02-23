@@ -10,9 +10,10 @@ from urllib.parse import quote_plus, urlencode
 
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-from flask import Flask, abort, make_response, redirect, render_template, url_for, g
+from flask import Flask, abort, make_response, redirect, render_template, url_for
 
-from src.backendAPI import auth
+from src.backendAPI import auth, id_token_verifier
+from src.extension.JWT_verification import get_verified_id_claims
 
 
 def create_app() -> Flask:
@@ -47,21 +48,22 @@ def create_app() -> Flask:
         )
 
     app.secret_key = FLASK_SECRET_KEY
-    BASE_URL = f"https://{AUTH0_DOMAIN}"
+    BASE_URL: str = f"https://{AUTH0_DOMAIN}"
 
     # Configure secure session cookies
-    app.config.update(
-        SESSION_COOKIE_SECURE=True,  # Requires HTTPS
-        SESSION_COOKIE_SAMESITE="Lax",
-        SESSION_COOKIE_HTTPONLY=True,
-    )
+    config_dict: dict[str, str | bool] = {
+        "SESSION_COOKIE_SECURE": True,  # Requires HTTPS
+        "SESSION_COOKIE_SAMESITE": "Lax",
+        "SESSION_COOKIE_HTTPONLY": True,
+    }
+    app.config.update(config_dict)  # type: ignore[arg-type]
 
     # Initialize JWT verification extension
     auth.init_app(app)
 
     # Configure OAuth with Auth0
     oauth = OAuth(app)
-    auth0 = oauth.register(
+    auth0= oauth.register(
         "auth0",
         client_id=AUTH0_CLIENT_ID,
         client_secret=AUTH0_CLIENT_SECRET,
@@ -163,10 +165,11 @@ def create_app() -> Flask:
 
         Displays the user's profile information from the JWT claims.
         """
-        # Get user claims from JWT (set by auth.require() decorator)
-        user_claims = g.jwt if hasattr(g, "jwt") else {}
-
-        return render_template("profile.html", user=user_claims)
+        try:
+            id_claims = get_verified_id_claims(id_token_verifier)
+        except Exception:
+            id_claims = None
+        return render_template("profile.html", user=id_claims)
 
     # ==================== Error Handlers ====================
 

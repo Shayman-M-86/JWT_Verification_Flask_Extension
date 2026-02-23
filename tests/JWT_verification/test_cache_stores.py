@@ -1,5 +1,6 @@
+from typing import Any, Callable
+
 import pytest
-from typing import Callable, Any
 
 import src.extension.JWT_verification as m
 
@@ -19,13 +20,15 @@ def test_inmemory_cache_requires_kid():
     class K:
         key_id = None
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         cache.set(K(), ttl_seconds=60)  # type: ignore[arg-type]
 
 
-def test_redis_cache_roundtrip(fake_redis: Callable[..., Any], make_oct_jwk: Callable[..., Any]):
+def test_redis_cache_roundtrip(
+    fake_redis: Callable[..., Any], make_oct_jwk: Callable[..., Any]
+):
 
-    cache = m.redisCache(fake_redis)
+    cache = m.RedisCache(fake_redis)  # type: ignore
 
     jwk = make_oct_jwk(kid="k2")
     cache.set(jwk, ttl_seconds=60)
@@ -36,8 +39,8 @@ def test_redis_cache_roundtrip(fake_redis: Callable[..., Any], make_oct_jwk: Cal
 
 
 def test_redis_cache_invalid_json_raises(fake_redis: Callable[..., Any]):
-    cache = m.redisCache(fake_redis)
+    cache = m.RedisCache(fake_redis)  # type: ignore
 
-    fake_redis.setex("bad", 60, "not-json") # type: ignore
+    fake_redis.setex("bad", 60, "not-json")  # type: ignore
     with pytest.raises(RuntimeError):
         cache.get("bad")
