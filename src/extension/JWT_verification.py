@@ -108,7 +108,12 @@ class Authorizer(Protocol):
         require_all_permissions: bool,
     ) -> None: ...
 
-
+class Extractor(Protocol):
+    """
+    Extracts the raw JWT from a Flask request.
+    """
+    def extract(self) -> str: ...
+        
 # ============================================================
 # Errors (domain exceptions)
 # ============================================================
@@ -139,7 +144,7 @@ class Forbidden(AuthError):
 # ============================================================
 
 
-class BearerExtractor:
+class BearerExtractor(Extractor):
     """
     Extracts the raw JWT from a Flask request.
 
@@ -152,6 +157,17 @@ class BearerExtractor:
         if not auth.startswith("Bearer "):
             raise MissingToken("Missing bearer token")
         return auth.split(" ", 1)[1].strip()
+
+
+class CookieExtractor(Extractor):
+    def __init__(self, cookie_name: str = "access_token") -> None:
+        self._name = cookie_name
+
+    def extract(self) -> str:
+        token = request.cookies.get(self._name)
+        if not token:
+            raise MissingToken("Missing access token cookie")
+        return token
 
 
 # ============================================================
@@ -328,12 +344,11 @@ class Auth0JWKSProvider(KeyProvider):
 
     def __init__(
         self,
-        domain: str,
+        issuer: str,
         cache: CacheStore,
         ttl_seconds: int = 600,
         Gate: RefreshGate = RefreshGate()
     ) -> None:
-        issuer = f"https://{domain}/"
         jwks_url = f"{issuer}.well-known/jwks.json"
 
         self._client = PyJWKClient(
@@ -569,10 +584,15 @@ class AuthExtension:
         def admin(): ...
     """
 
-    def __init__(self,verifier: TokenVerifier, authorizer: Authorizer | None = None) -> None:
+    def __init__(
+        self,
+        verifier: TokenVerifier,
+        authorizer: Authorizer | None = None,
+        extractor: Extractor = BearerExtractor(),
+    ) -> None:
         self._verifier: TokenVerifier = verifier
         self._authorizer: Authorizer | None = authorizer
-        self._extractor: BearerExtractor = BearerExtractor()
+        self._extractor: Extractor = extractor
 
     def init_app(
         self,
@@ -580,7 +600,7 @@ class AuthExtension:
         *,
         verifier: TokenVerifier | None = None,
         authorizer: Authorizer | None = None,
-        extractor: BearerExtractor | None = None,
+        extractor: Extractor | None = None,
     ) -> None:
         if verifier is not None:
             self._verifier = verifier
@@ -633,8 +653,8 @@ class AuthExtension:
                     abort(401, description="Missing token")
                 except ExpiredToken:
                     abort(401, description="Expired token")
-                except InvalidToken:
-                    abort(401, description="Invalid token")
+                except InvalidToken as e:
+                    abort(401, description=f"Invalid token: {e}")
                 except Forbidden:
                     abort(403, description="Forbidden")
 

@@ -44,7 +44,7 @@ def test_auth0_provider_returns_cached_key(monkeypatch: pytest.MonkeyPatch):
     cache.set(fake_key, 600)
 
     provider = m.Auth0JWKSProvider(
-        domain="example.au.auth0.com",
+        issuer="example.au.auth0.com",
         cache=cache,
         ttl_seconds=600,
         Gate=DummyGate(True),
@@ -69,7 +69,7 @@ def test_auth0_provider_fetches_and_caches_on_miss(monkeypatch: pytest.MonkeyPat
             return fetched_key
 
     provider = m.Auth0JWKSProvider(
-        domain="example.au.auth0.com",
+        issuer="example.au.auth0.com",
         cache=cache,
         ttl_seconds=600,
         Gate=DummyGate(True),
@@ -86,7 +86,7 @@ def test_auth0_provider_raises_when_gate_blocks(monkeypatch: pytest.MonkeyPatch)
     cache = DummyCache()
 
     provider = m.Auth0JWKSProvider(
-        domain="example.au.auth0.com",
+        issuer="example.au.auth0.com",
         cache=cache,
         ttl_seconds=600,
         Gate=DummyGate(False),
