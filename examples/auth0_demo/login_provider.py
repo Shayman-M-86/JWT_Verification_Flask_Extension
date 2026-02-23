@@ -15,6 +15,13 @@ from flask import Flask, abort, make_response, redirect, render_template, url_fo
 from examples.auth0_demo.app import auth, id_token_verifier
 from jwt_verification import get_verified_id_claims
 
+# Auth0 Configuration
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
+AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
+AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
+AUTH0_API_AUDIENCE = os.environ.get("AUTH0_API_AUDIENCE")
+FLASK_SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
+
 
 def create_app() -> Flask:
     """
@@ -27,12 +34,6 @@ def create_app() -> Flask:
     load_dotenv()
 
     # Auth0 Configuration
-    AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
-    AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
-    AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
-    AUTH0_API_AUDIENCE = os.environ.get("AUTH0_API_AUDIENCE")
-    FLASK_SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
-
     # Validate required environment variables
     if not all(
         [
@@ -48,7 +49,7 @@ def create_app() -> Flask:
         )
 
     app.secret_key = FLASK_SECRET_KEY
-    BASE_URL: str = f"https://{AUTH0_DOMAIN}"
+    base_url: str = f"https://{AUTH0_DOMAIN}"
 
     # Configure secure session cookies
     config_dict: dict[str, str | bool] = {
@@ -67,10 +68,13 @@ def create_app() -> Flask:
         "auth0",
         client_id=AUTH0_CLIENT_ID,
         client_secret=AUTH0_CLIENT_SECRET,
-        server_metadata_url=f"{BASE_URL}/.well-known/openid-configuration",
+        server_metadata_url=f"{base_url}/.well-known/openid-configuration",
         client_kwargs={"scope": "openid profile email"},
     )
 
+    host = "api.localtest.me"
+    port = 5000
+    print(f"\n🚀 Auth server running at: https://{host}:{port}\n")
     # ==================== Routes ====================
 
     @app.route("/")
@@ -141,7 +145,7 @@ def create_app() -> Flask:
 
         Redirects to Auth0's logout endpoint and then returns to home.
         """
-        logout_url = f"{BASE_URL}/v2/logout?" + urlencode(
+        logout_url = f"{base_url}/v2/logout?" + urlencode(
             {
                 "returnTo": url_for("home", _external=True, _scheme="https"),
                 "client_id": AUTH0_CLIENT_ID,
