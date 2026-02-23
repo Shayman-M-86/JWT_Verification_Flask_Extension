@@ -1,17 +1,37 @@
-"""
-Flask extension for JWT authentication and authorization.
+"""Flask extension for JWT authentication and authorization.
+
+This module provides the main integration point between the JWT verification
+extension and Flask applications. It implements a decorator-based approach
+for protecting routes with authentication and authorization requirements.
+
+Key Components:
+- AuthExtension: Main decorator class for protecting Flask routes
+- get_verified_id_claims: Utility for verifying ID tokens from cookies
+
+Security Model:
+1. Extract token from request (header or cookie)
+2. Verify token signature and claims
+3. Store verified claims in flask.g.jwt for route access
+4. Optionally enforce RBAC requirements (roles/permissions)
+5. Convert auth errors to appropriate HTTP responses (401/403)
 """
 
+from __future__ import annotations
+
+from collections.abc import Sequence
 from functools import wraps
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Final
 
 from flask import Flask, abort, g, request
 
 from .errors import ExpiredToken, Forbidden, InvalidToken, MissingToken
 from .extractors import BearerExtractor
-from .protocols import Authorizer, Extractor, TokenVerifier, ViewFunc
 
-_EXT_KEY = "auth_extension"
+if TYPE_CHECKING:
+    from .protocols import Authorizer, Extractor, TokenVerifier, ViewFunc
+
+_EXT_KEY: Final[str] = "auth_extension"
+"""Flask extensions registry key for AuthExtension."""
 
 
 class AuthExtension:

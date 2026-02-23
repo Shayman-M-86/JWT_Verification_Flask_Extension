@@ -12,8 +12,8 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from flask import Flask, abort, make_response, redirect, render_template, url_for
 
-from src.backendAPI import auth, id_token_verifier
-from src.extension.jwt_verification import get_verified_id_claims
+from examples.auth0_demo.app import auth, id_token_verifier
+from jwt_verification import get_verified_id_claims
 
 
 def create_app() -> Flask:

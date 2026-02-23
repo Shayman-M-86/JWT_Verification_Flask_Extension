@@ -1,7 +1,7 @@
 import pytest
 
-import src.extension.jwt_verification as m
-from src.extension.jwt_verification import refresh_gate
+import jwt_verification as m
+from jwt_verification import refresh_gate
 
 
 def test_refresh_gate_allows_first(monkeypatch: pytest.MonkeyPatch):

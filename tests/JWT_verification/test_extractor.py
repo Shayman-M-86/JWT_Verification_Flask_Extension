@@ -1,14 +1,14 @@
 import pytest
 from flask import Flask
 
-from src.extension.jwt_verification import BearerExtractor, MissingToken
+from jwt_verification import BearerExtractor, MissingToken
 
 
 def test_bearer_extractor_missing(app: Flask):
     extractor = BearerExtractor()
 
     with app.test_request_context("/", headers={}):
-        with pytest.raises(MissingToken):
+        with pytest.raises(MissingToken, match="Missing Authorization header"):
             extractor.extract()
 
 

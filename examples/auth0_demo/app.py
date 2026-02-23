@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from src.extension.jwt_verification import (
+from jwt_verification import (
     Auth0JWKSProvider,
     AuthExtension,
     CookieExtractor,

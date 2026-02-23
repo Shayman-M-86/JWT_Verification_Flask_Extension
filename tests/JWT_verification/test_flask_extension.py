@@ -8,7 +8,7 @@ from typing import Any
 
 from flask import Flask, g
 
-import src.extension.jwt_verification as m
+import jwt_verification as m
 
 
 class OkVerifier(m.TokenVerifier):
@@ -37,7 +37,7 @@ class DenyAuthorizer(m.Authorizer):
         roles: frozenset[str],
         require_all_permissions: bool,
     ) -> None:
-        raise m.Forbidden()
+        raise m.Forbidden
 
 
 class PassAuthorizer(m.Authorizer):

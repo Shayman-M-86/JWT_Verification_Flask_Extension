@@ -24,7 +24,7 @@ Example usage
 
 .. code-block:: python
 
-    from src.extension.jwt_verification import (
+    from jwt_verification import (
         AuthExtension,
         JWTVerifier,
         JWTVerifyOptions,

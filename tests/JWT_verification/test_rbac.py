@@ -6,7 +6,7 @@ Tests permission and role claim extraction and authorization.
 
 import pytest
 
-import src.extension.jwt_verification as m
+import jwt_verification as m
 
 
 class TestPermissionExtraction:

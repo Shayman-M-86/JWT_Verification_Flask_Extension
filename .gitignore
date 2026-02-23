@@ -54,6 +54,7 @@ cover/
 
 
 *temp*
+*.pem
 
 # Jupyter Notebook
 .ipynb_checkpoints

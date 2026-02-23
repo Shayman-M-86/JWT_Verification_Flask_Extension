@@ -1,8 +1,9 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 
-import src.extension.jwt_verification as m
+import jwt_verification as m
 
 
 def test_inmemory_cache_set_get(make_oct_jwk: Callable[..., Any]):

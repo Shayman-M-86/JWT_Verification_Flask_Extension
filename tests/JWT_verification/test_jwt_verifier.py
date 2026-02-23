@@ -5,7 +5,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from jwt import PyJWK
 
-import src.extension.jwt_verification as m
+import jwt_verification as m
 
 
 class DummyProvider:
@@ -21,9 +21,7 @@ class DummyProvider:
 
 
 def test_jwtverifier_reads_kid_and_calls_keyprovider(monkeypatch: MonkeyPatch):
-    dummy_key = cast(
-        PyJWK, object()
-    )  # we don't need a real PyJWK; only identity checks
+    dummy_key = cast(PyJWK, object())  # we don't need a real PyJWK; only identity checks
 
     provider = DummyProvider(dummy_key)
     verifier = m.JWTVerifier(
@@ -60,9 +58,9 @@ def test_jwtverifier_missing_kid(monkeypatch: MonkeyPatch):
         m.JWTVerifyOptions(issuer=None, audience=None),
     )
 
-    monkeypatch.setattr(jwt, "get_unverified_header", lambda: {})  # type: ignore # no kid
+    monkeypatch.setattr(jwt, "get_unverified_header", lambda _t: {})  # type: ignore # no kid
 
-    with pytest.raises(m.InvalidToken):
+    with pytest.raises(m.InvalidToken, match="missing required 'kid' claim"):
         verifier.verify("TOKEN")
 
 
@@ -82,7 +80,7 @@ def test_jwtverifier_expired_maps_to_domain_error(monkeypatch: MonkeyPatch):
 
     monkeypatch.setattr(jwt, "decode", fake_decode)
 
-    with pytest.raises(m.ExpiredToken):
+    with pytest.raises(m.ExpiredToken, match="Token has expired"):
         verifier.verify("TOKEN")
 
 

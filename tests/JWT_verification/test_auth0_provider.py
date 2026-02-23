@@ -7,7 +7,7 @@ Tests the JWKS fetching, caching, and refresh logic.
 import pytest
 from jwt import PyJWK, PyJWKClient
 
-import src.extension.jwt_verification as m
+import jwt_verification as m
 
 
 class DummyJwk(PyJWK):
@@ -64,9 +64,7 @@ class TestAuth0ProviderCaching:
 class TestAuth0ProviderFetching:
     """Test JWKS fetching functionality."""
 
-    def test_auth0_provider_fetches_and_caches_on_miss(
-        self, monkeypatch: pytest.MonkeyPatch
-    ):
+    def test_auth0_provider_fetches_and_caches_on_miss(self, monkeypatch: pytest.MonkeyPatch):
         """Should fetch from JWKS endpoint and cache on cache miss."""
         cache = DummyCache()
         fetched_key = DummyJwk(signing_key_id="kidX")
@@ -103,9 +101,7 @@ class TestAuth0ProviderFetching:
 class TestAuth0ProviderRefreshGate:
     """Test refresh gate logic."""
 
-    def test_auth0_provider_raises_when_gate_blocks(
-        self, monkeypatch: pytest.MonkeyPatch
-    ):
+    def test_auth0_provider_raises_when_gate_blocks(self, monkeypatch: pytest.MonkeyPatch):
         """Should raise InvalidToken when refresh gate blocks retry."""
         cache = DummyCache()
 
@@ -115,7 +111,7 @@ class TestAuth0ProviderRefreshGate:
             ttl_seconds=600,
         )
 
-        with pytest.raises(m.InvalidToken):
+        with pytest.raises(m.InvalidToken, match="Unable to resolve signing key"):
             provider.get_key_for_token("kid_nope")
 
     def test_auth0_provider_respects_ttl(self, monkeypatch: pytest.MonkeyPatch):

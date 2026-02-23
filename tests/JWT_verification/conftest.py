@@ -1,7 +1,7 @@
 import time
+
 import pytest
 from flask import Flask
-
 from jwt import PyJWK
 from jwt.utils import base64url_encode
 
@@ -59,6 +59,7 @@ class FakeRedis:
         if isinstance(value, str):
             value = value.encode("utf-8")
         self._store[key] = (value, expires_at)
+
 
 @pytest.fixture
 def fake_redis() -> FakeRedis:
