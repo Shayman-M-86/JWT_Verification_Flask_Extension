@@ -1,4 +1,4 @@
-# Flask JWT Verification Extension
+# JWT Verification Flask Extension
 
 A production-ready Flask extension for JWT authentication and authorization with built-in Auth0 integration, RBAC, and intelligent caching.
 
