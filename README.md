@@ -303,9 +303,6 @@ See [README.md - Deployment](docs/README.md#deployment) for complete guide.
 - Redis 5.0+ (for production caching)
 - Auth0 account (for examples)
 
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 ### Development Setup
 
