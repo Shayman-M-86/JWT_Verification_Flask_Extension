@@ -113,7 +113,7 @@ flask-jwt-verification/
 │   └── AI_PROMPT.md               # AI assistant guide
 ├── examples/
 │   └── auth0_demo/                # Complete Auth0 integration example
-│       ├── app.py                 # Backend API setup
+│       ├── app_config.py                 # Backend API setup
 │       ├── login_provider.py      # OAuth login flow
 │       ├── templates/             # HTML templates
 │       ├── static/                # CSS and assets
@@ -311,7 +311,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) fo
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/flask-jwt-verification.git
+git clone https://github.com/yourusername/flask-jwt-verification.git # Update actual GitHub URL
 cd flask-jwt-verification
 
 # Create virtual environment
@@ -345,8 +345,8 @@ See [CHANGELOG.md](docs/CHANGELOG.md) for version history.
 ## Support
 
 - **Documentation:** [Documentation Index](docs/INDEX.md)
-- **Issues:** [GitHub Issues](https://github.com/yourusername/flask-jwt-verification/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/flask-jwt-verification/discussions)
+- **Issues:** [GitHub Issues](https://github.com/yourusername/flask-jwt-verification/issues) # Update actual GitHub URL
+- **Discussions:** [GitHub Discussions](https://github.com/yourusername/flask-jwt-verification/discussions) # Update actual GitHub URL
 
 ## Acknowledgments
 

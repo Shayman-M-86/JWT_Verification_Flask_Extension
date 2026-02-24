@@ -1,56 +1,54 @@
 # Auth0 Demo Application
 
-This is a complete example demonstrating how to use the Flask JWT Verification Extension with Auth0 for authentication and authorization.
+Complete example demonstrating Flask JWT Verification Extension with Auth0 for authentication and cross-origin API access.
 
 ## What's Included
 
-This demo includes:
-
-- **OAuth Login Flow** - Complete Auth0 login/logout implementation
+- **OAuth Login Flow** - Auth0 login/logout with secure cookie storage
 - **JWT Verification** - Backend API protected with JWT authentication
-- **RBAC** - Role-based and permission-based access control
-- **Web UI** - Simple HTML templates demonstrating the flow
-- **SSL/TLS** - Self-signed certificates for local HTTPS testing
+- **CORS** - Cross-origin requests between login provider and backend
+- **Web UI** - Interactive test interface with visual feedback
+- **SSL/TLS** - Self-signed certificates for local HTTPS
 
 ## Architecture
+
+Two-server setup demonstrating cross-origin authentication:
 
 ```text
 ┌──────────────┐
 │   Browser    │
 └──────┬───────┘
        │
-       ├─── GET /login ─────────────────┐
+       ├─── GET /home ──────────────────┐
+       │                        ┌───────▼────────────┐
+       │                        │ Login Provider     │
+       │◄──── HTML/JS ──────────┤  Port 5000         │
+       │                        │  OAuth + Cookies   │
+       │                        └───────┬────────────┘
        │                                │
-       │                        ┌───────▼────────┐
-       │                        │ login_provider │
-       │                        │  (Flask App)   │
-       │◄──── Redirect ─────────┤  Port 5001     │
-       │      to Auth0          └───────┬────────┘
-       │                                │
-┌──────▼───────┐                        │
-│    Auth0     │                        │
-│   (OAuth)    │                        │
-└──────┬───────┘                        │
-       │                                │
-       │◄───── Get User Info ───────────┘
+       │◄──── Redirect to Auth0 ────────┘
        │
-       ├─── Callback with Code ─────────┐
-       │                                │
-       │                        ┌───────▼────────┐
-       │                        │ login_provider │
-       │◄──── Set Cookie ───────┤ Exchange Code  │
-       │      Return Token      │  for Token     │
-       │                        └────────────────┘
+┌──────▼───────┐
+│    Auth0     │
+└──────┬───────┘
        │
-       ├─── GET /api/protected ─────────┐
-       │    Authorization: Bearer ...   │
-       │                        ┌───────▼────────┐
-       │                        │   app.py       │
-       │                        │ (Backend API)  │
-       │◄──── JSON Response ────┤  Port 5000     │
-       │                        │ JWT Verification│
-       │                        └────────────────┘
+       ├─── Callback ───────────────────┐
+       │                        ┌───────▼────────────┐
+       │◄──── Set Cookies ──────┤ Login Provider     │
+       │                        └────────────────────┘
+       │
+       ├─── Test Backend (CORS) ────────┐
+       │    Bearer Token + Cookies      │
+       │                        ┌───────▼────────────┐
+       │◄──── JSON Response ────┤ Backend API        │
+                                │  Port 5001         │
+                                │  JWT Verification  │
+                                └────────────────────┘
 ```
+
+**Components:**
+- **Login Provider (5000)** - OAuth flow, session management, web UI
+- **Backend API (5001)** - Protected endpoints with JWT verification
 
 ## Setup
 
@@ -74,9 +72,9 @@ This demo includes:
 
 In your application settings:
 
-- **Allowed Callback URLs**: `https://localhost:5001/callback`
-- **Allowed Logout URLs**: `https://localhost:5001/`
-- **Allowed Web Origins**: `https://localhost:5001`
+- **Allowed Callback URLs**: `https://api.localtest.me:5000/login-redirect`
+- **Allowed Logout URLs**: `https://api.localtest.me:5000/`, `https://api.localtest.me:5001/home`
+- **Allowed Web Origins**: `https://api.localtest.me:5000`, `https://api.localtest.me:5001`
 
 Save changes.
 
@@ -144,7 +142,7 @@ FLASK_ENV=development
 
 ```bash
 # From the project root
-pip install -e ".[examples]"
+uv sync --extra examples
 ```
 
 This installs:
@@ -155,234 +153,159 @@ This installs:
 - python-dotenv
 - Other dependencies
 
-### 5. Generate SSL Certificates (if needed)
+### 5. Generate HTTPS Certificates with mkcert (Optional)
 
-The demo includes self-signed certificates in the `certs/` directory. If you need to regenerate them:
+The demo includes development certificates in the certs/ directory.
+If you need to regenerate them, you can use mkcert to create locally trusted certificates.
+
+Install mkcert from the official repository: [mkcert](https://github.com/FiloSottile/mkcert)
+
+Then run:
 
 ```bash
-cd examples/auth0_demo
+cd examples/auth0_demo/certs
 
-# Generate new self-signed certificate
-openssl req -x509 -newkey rsa:4096 -nodes \
-  -keyout certs/key.pem \
-  -out certs/cert.pem \
-  -days 365 \
-  -subj "/CN=localhost"
+mkcert -install        # one-time setup
+mkcert api.localtest.me
+```
+
+This will generate:
+
+```code
+api.localtest.me.pem
+api.localtest.me-key.pem
+```
+
+You can then access the demo at:
+
+```code
+https://api.localtest.me:5000
 ```
 
 ## Running the Demo
 
-### Quick Start
+### Two-Server Setup
+
+This demo requires **two separate Flask servers** running simultaneously:
+
+#### Terminal 1 - Backend API (Port 5001)
 
 ```bash
 cd examples/auth0_demo
-bash run.sh
+bash run_backend.sh
 ```
 
-This script:
-
-1. Loads environment variables from `.env`
-2. Starts the backend API on port 5000 (HTTPS)
-3. Starts the login provider on port 5001 (HTTPS)
-
-### Manual Start
-
-#### Terminal 1 - Backend API
+#### Terminal 2 - Login Provider (Port 5000)
 
 ```bash
 cd examples/auth0_demo
-python app.py
+bash run_login_provider.sh
 ```
 
-Starts on: <https://localhost:5000>
+Both servers must be running for the demo to work properly.
 
-#### Terminal 2 - Login Provider
+### Access the Application
 
-```bash
-cd examples/auth0_demo
-python login_provider.py
-```
-
-Starts on: <https://localhost:5001>
-
-## Using the Demo
-
-### 1. Open the Application
-
-Navigate to: <https://localhost:5001>
+Navigate to: <https://api.localtest.me:5000>
 
 **Note:** You'll see a browser warning about the self-signed certificate. This is expected for local development. Click "Advanced" and proceed.
 
-### 2. Login
+## Features Demonstrated
 
-Click the "Login" button. You'll be redirected to Auth0 to authenticate.
+### 1. OAuth 2.0 Login Flow
 
-### 3. Access Protected Routes
+- Click "🚀 Login with Auth0" to authenticate
+- Redirects to Auth0 for login
+- Returns to application with JWT tokens stored as HTTP-only cookies
 
-After login, you can test the protected API endpoints:
+### 2. Protected Routes
 
-- **GET /api/protected** - Requires valid JWT
-- **GET /api/admin** - Requires `admin` role
-- **GET /api/profile** - Returns user profile from JWT
+- **`/protected`** - User profile page (requires authentication)
+- **`/api/test-access`** - Backend API endpoint (requires JWT)
 
-### 4. Test with curl
 
-```bash
-# Get a token (manually from browser network tab, or from the /profile page)
-TOKEN="your_jwt_token_here"
+### 4. CORS Configuration
 
-# Call protected endpoint
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:5000/api/protected
+Both servers are configured for cross-origin communication:
 
-# Call admin endpoint (requires 'admin' role)
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:5000/api/admin
+- Backend API accepts requests from Login Provider
+- Credentials (cookies) are included in cross-origin requests
+- Proper CORS headers for secure token transmission
 
-# Call profile endpoint
-curl -k -H "Authorization: Bearer $TOKEN" https://localhost:5000/api/profile
-```
+### 5. Test Backend Access
 
-## Code Overview
+The **Test Backend Access** button demonstrates:
+- Cross-origin request from Login Provider (5000) to Backend (5001)
 
-### app.py - Backend API
+- Bearer token + cookie authentication
+- Visual feedback: ✓ Permission Granted or ✗ Access Denied
 
-The backend API demonstrates:
+## Code Examples
+
+### Backend API (Port 5001)
 
 ```python
-from jwt_verification import (
-    AuthExtension,
-    Auth0JWKSProvider,
-    JWTVerifier,
-    JWTVerifyOptions,
-    RBACAuthorizer,
-    ClaimAccess,
-    ClaimsMapping,
-)
+from flask import Flask, jsonify
+from flask_cors import CORS
+from jwt_verification import AuthExtension
 
-# Setup JWT verification
-provider = Auth0JWKSProvider(issuer=f"https://{AUTH0_DOMAIN}/")
-verifier = JWTVerifier(
-    key_provider=provider,
-    options=JWTVerifyOptions(
-        issuer=f"https://{AUTH0_DOMAIN}/",
-        audience=AUTH0_API_IDENTIFIER,
-    ),
-)
+app = Flask(__name__)
 
-# Setup RBAC
-mapping = ClaimsMapping(permissions_claim="permissions", roles_claim="roles")
-authorizer = RBACAuthorizer(ClaimAccess(mapping))
+CORS(app, origins=["https://api.localtest.me:5000"], supports_credentials=True)
 
-# Create auth extension
 auth = AuthExtension(verifier=verifier, authorizer=authorizer)
+auth.init_app(app)
 
-# Protected route - authentication only
-@app.route("/api/protected")
+@app.get("/api/test-access")
 @auth.require()
-def protected():
-    return {"message": "Access granted", "user": g.jwt["sub"]}
-
-# Admin route - requires 'admin' role
-@app.route("/api/admin")
-@auth.require(roles=["admin"])
-def admin():
-    return {"message": "Admin access granted"}
+def test_access():
+    return jsonify({"status": "success", "message": "Permission Granted ✓"})
 ```
 
-### login_provider.py - OAuth Login
-
-The login provider demonstrates:
+### Login Provider (Port 5000)
 
 ```python
 from authlib.integrations.flask_client import OAuth
-from flask import Flask, redirect, session, url_for
+from flask import Flask, redirect, make_response
+from flask_cors import CORS
 
-# Configure OAuth
+app = Flask(__name__)
+CORS(app, origins=["https://api.localtest.me:5001"], supports_credentials=True)
+
 oauth = OAuth(app)
-oauth.register(
-    "auth0",
-    client_id=AUTH0_CLIENT_ID,
-    client_secret=AUTH0_CLIENT_SECRET,
-    api_base_url=f"https://{AUTH0_DOMAIN}",
-    access_token_url=f"https://{AUTH0_DOMAIN}/oauth/token",
-    authorize_url=f"https://{AUTH0_DOMAIN}/authorize",
-    client_kwargs={"scope": "openid profile email"},
-)
+auth0 = oauth.register("auth0", ...)
 
-@app.route("/login")
+@app.get("/login")
 def login():
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for("callback", _external=True)
-    )
+    return auth0.authorize_redirect(redirect_uri=..., audience=...)
 
-@app.route("/callback")
-def callback():
-    token = oauth.auth0.authorize_access_token()
-    session["access_token"] = token["access_token"]
-    return redirect("/profile")
+@app.get("/login-redirect")
+def login_redirect():
+    token = auth0.authorize_access_token()
+    resp = make_response(redirect("/home"))
+    resp.set_cookie("access_token", token["access_token"], httponly=True, secure=True)
+    return resp
 ```
 
-## Project Structure
+## Troubleshooting
 
-```text
-examples/auth0_demo/
-├── app.py                  # Backend API with JWT verification
-├── login_provider.py       # OAuth login/logout flow
-├── run.sh                  # Startup script
-├── .env                    # Environment configuration (create this)
-├── certs/                  # SSL certificates
-│   ├── cert.pem           # Self-signed certificate
-│   └── key.pem            # Private key
-├── templates/              # HTML templates
-│   ├── home.html          # Landing page
-│   ├── profile.html       # User profile (after login)
-│   └── 401.html           # Unauthorized page
-├── static/                 # CSS and assets
-│   └── style.css          # Styling
-└── README.md              # This file
-```
+### Certificate Warning
+Expected with self-signed certs. Click "Advanced" → proceed.
 
-## Common Issues
+### Callback URL Mismatch
+Verify Auth0 callback URL: `https://api.localtest.me:5000/login-redirect`
 
-### Browser Certificate Warning
+### CORS Errors
+- Ensure both servers running (5000 and 5001)
+- Check CORS origins in both `backend.py` and `login_provider.py`
 
-**Issue:** Browser shows "Your connection is not private"
-
-**Solution:** This is expected with self-signed certificates. Click "Advanced" and proceed. For production, use proper SSL certificates (e.g., Let's Encrypt).
-
-### Auth0 Callback Error
-
-**Issue:** "Callback URL mismatch" or similar Auth0 error
-
-**Solution:** Ensure the callback URL in Auth0 settings exactly matches: `https://localhost:5001/callback`
-
-### JWKS Fetch Error
-
-**Issue:** "Unable to fetch JWKS" or "Key not found"
-
-**Solution:**
-
-- Verify `AUTH0_DOMAIN` is correct (no `https://` prefix)
-- Check internet connection
-- Ensure Auth0 tenant is active
-
-### Role/Permission Not Working
-
-**Issue:** 401 error even though user has the role
-
-**Solution:**
-
-- Enable RBAC in Auth0 API settings
-- Enable "Add Permissions in the Access Token"
-- Re-login to get a new token with roles/permissions
+### Test Button Shows "Access Denied"
+- Log in first via OAuth flow
+- Check cookies in DevTools (Application → Cookies)
+- Verify both servers on correct ports
 
 ### Port Already in Use
-
-**Issue:** "Address already in use" error
-
-**Solution:**
-
 ```bash
-# Find and kill process using port 5000 or 5001
 # Windows
 netstat -ano | findstr :5000
 taskkill /PID <PID> /F
@@ -391,60 +314,36 @@ taskkill /PID <PID> /F
 lsof -ti:5000 | xargs kill -9
 ```
 
-## Security Notes
+### Cookies Not Sent
+- Use HTTPS (not HTTP)
+- Use `api.localtest.me` (not `localhost`)
+- Verify `credentials: 'include'` in fetch
 
-### For Development
+## Project Structure
 
-- Self-signed certificates are fine
-- `SECRET_KEY` doesn't need to be cryptographically strong
-- CORS can be permissive
-- Debug mode is okay
+```text
+examples/auth0_demo/
+├── backend.py              # Backend API (Port 5001)
+├── login_provider.py       # Login Provider (Port 5000)
+├── app_config.py           # Shared configuration
+├── run_backend.sh          # Start backend script
+├── run_login_provider.sh   # Start login provider script
+├── .env                    # Environment variables
+├── certs/                  # SSL certificates
+├── templates/              # HTML (home, profile, 401)
+└── static/                 # CSS with animations
+```
 
-### For Production
+## Documentation
 
-- Use proper SSL certificates (Let's Encrypt, etc.)
-- Generate strong `SECRET_KEY`: `secrets.token_hex(32)`
-- Configure CORS properly
-- Disable debug mode (`FLASK_ENV=production`)
-- Use Redis for caching instead of InMemoryCache
-- Enable Auth0 tenant security features
-- Set up monitoring and logging
-- Use environment-specific configuration
-
-## Next Steps
-
-After running this demo, you can:
-
-1. **Customize the Extension**
-   - Implement custom `KeyProvider` for other identity providers
-   - Create custom `CacheStore` implementations
-   - Add custom claims validation
-
-2. **Integrate into Your App**
-   - Copy the JWT configuration from `app.py`
-   - Adapt the login flow from `login_provider.py`
-   - Use `@auth.require()` on your routes
-
-3. **Explore Documentation**
-   - [Extension README](../../docs/README.md) - Architecture and usage
-   - [API Reference](../../docs/API_REFERENCE.md) - Complete API docs
-   - [Examples](../../docs/EXAMPLES.md) - More code examples
-   - [Security Guide](../../docs/SECURITY.md) - Security analysis
-
-## Support
-
-For issues with:
-
-- **The Extension**: See main [README.md](../../README.md)
-- **Auth0**: Check [Auth0 Documentation](https://auth0.com/docs)
-- **This Demo**: Open an issue describing the problem
+- [Extension README](../../docs/README.md)
+- [API Reference](../../docs/API_REFERENCE.md)
+- [Auth0 Docs](https://auth0.com/docs)
 
 ## License
 
-This example code is provided under the MIT License, the same as the main extension.
+MIT License
 
 ---
 
-**Demo Version:** 1.0.0  
-**Extension Version:** 1.0.0  
-**Last Updated:** 2024
+**Last Updated:** 2026

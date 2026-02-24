@@ -5,22 +5,17 @@ This module provides OAuth 2.0 authentication using Auth0 for a Flask web applic
 It handles login, logout, token management, and protected routes.
 """
 
-import os
+
 from urllib.parse import quote_plus, urlencode
 
 from authlib.integrations.flask_client import OAuth
-from dotenv import load_dotenv
-from flask import Flask, abort, make_response, redirect, render_template, url_for
+from flask import (Flask, abort, jsonify, make_response, redirect,
+                   render_template, request, url_for)
+from flask_cors import CORS
 
-from examples.auth0_demo.app import auth, id_token_verifier
+from examples.auth0_demo.app_config import (GLOBAL_CONFIG, auth,
+                                            id_token_verifier)
 from jwt_verification import get_verified_id_claims
-
-# Auth0 Configuration
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
-AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
-AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
-AUTH0_API_AUDIENCE = os.environ.get("AUTH0_API_AUDIENCE")
-FLASK_SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
 
 
 def create_app() -> Flask:
@@ -31,25 +26,24 @@ def create_app() -> Flask:
         Flask: Configured Flask application instance
     """
     app = Flask(__name__)
-    load_dotenv()
 
     # Auth0 Configuration
     # Validate required environment variables
     if not all(
         [
-            AUTH0_DOMAIN,
-            AUTH0_CLIENT_ID,
-            AUTH0_CLIENT_SECRET,
-            AUTH0_API_AUDIENCE,
-            FLASK_SECRET_KEY,
+            GLOBAL_CONFIG["AUTH0_DOMAIN"],
+            GLOBAL_CONFIG["AUTH0_CLIENT_ID"],
+            GLOBAL_CONFIG["AUTH0_CLIENT_SECRET"],
+            GLOBAL_CONFIG["AUTH0_API_AUDIENCE"],
+            GLOBAL_CONFIG["FLASK_SECRET_KEY"],
         ]
     ):
         raise ValueError(
             "Missing required environment variables for Auth0 configuration"
         )
 
-    app.secret_key = FLASK_SECRET_KEY
-    base_url: str = f"https://{AUTH0_DOMAIN}"
+    app.secret_key = GLOBAL_CONFIG["FLASK_SECRET_KEY"]
+    base_url: str = f"https://{GLOBAL_CONFIG['AUTH0_DOMAIN']}"
 
     # Configure secure session cookies
     config_dict: dict[str, str | bool] = {
@@ -59,6 +53,19 @@ def create_app() -> Flask:
     }
     app.config.update(config_dict)  # type: ignore[arg-type]
 
+    # Configure CORS for login provider endpoints
+    CORS(
+        app,
+        origins=[
+            "https://api.localtest.me:5000",
+            "https://api.localtest.me:5001",
+        ],
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+        methods=["GET", "POST", "OPTIONS"],
+        max_age=3600,
+    )
+
     # Initialize JWT verification extension
     auth.init_app(app)
 
@@ -66,15 +73,15 @@ def create_app() -> Flask:
     oauth = OAuth(app)
     auth0 = oauth.register(
         "auth0",
-        client_id=AUTH0_CLIENT_ID,
-        client_secret=AUTH0_CLIENT_SECRET,
+        client_id=GLOBAL_CONFIG["AUTH0_CLIENT_ID"],
+        client_secret=GLOBAL_CONFIG["AUTH0_CLIENT_SECRET"],
         server_metadata_url=f"{base_url}/.well-known/openid-configuration",
         client_kwargs={"scope": "openid profile email"},
     )
 
     host = "api.localtest.me"
-    port = 5000
-    print(f"\n🚀 Auth server running at: https://{host}:{port}\n")
+    app_port = 5000
+    print(f"\n🚀 Auth server running at: https://{host}:{app_port}\n")
     # ==================== Routes ====================
 
     @app.route("/")
@@ -92,7 +99,7 @@ def create_app() -> Flask:
         """
         redirect_uri = url_for("login_redirect", _external=True, _scheme="https")
         return auth0.authorize_redirect(
-            redirect_uri=redirect_uri, audience=AUTH0_API_AUDIENCE
+            redirect_uri=redirect_uri, audience=GLOBAL_CONFIG["AUTH0_API_AUDIENCE"]
         )
 
     @app.get("/login-redirect")
@@ -148,7 +155,7 @@ def create_app() -> Flask:
         logout_url = f"{base_url}/v2/logout?" + urlencode(
             {
                 "returnTo": url_for("home", _external=True, _scheme="https"),
-                "client_id": AUTH0_CLIENT_ID,
+                "client_id": GLOBAL_CONFIG["AUTH0_CLIENT_ID"],
             },
             quote_via=quote_plus,
         )
@@ -180,6 +187,14 @@ def create_app() -> Flask:
     @app.errorhandler(401)
     def unauthorized(error):
         """Handle unauthorized access errors."""
+        # Return JSON for API requests
+        if request.path.startswith("/api/"):
+            return jsonify({
+                "status": "denied",
+                "message": "Access Denied - Please login first",
+                "authenticated": False
+            }), 401
+        # Return HTML for web routes
         return render_template("401.html", error=error), 401
 
     return app

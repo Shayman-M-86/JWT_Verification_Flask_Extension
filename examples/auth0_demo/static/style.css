@@ -93,6 +93,23 @@ h3 {
     }
 }
 
+@keyframes resultReaction {
+    0% {
+        transform: scale(1) rotate(0deg);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.05) rotate(2deg);
+        filter: brightness(1.1);
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        filter: brightness(1);
+    }
+}
+
 /* ==================== Buttons ==================== */
 
 .button {
@@ -151,6 +168,123 @@ h3 {
 .button-secondary:hover {
     background-color: #3a3f4b;
     border-color: #4299e1;
+}
+
+.button-test {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: #ffffff;
+    text-transform: none;
+    font-size: 1rem;
+    padding: 1rem 2rem;
+    margin-top: 1rem;
+}
+
+.button-test:hover {
+    background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ==================== Test Section Styles ==================== */
+
+.test-section {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.test-result {
+    margin-top: 1.5rem;
+    animation: slideDown 0.4s ease-out;
+}
+
+.test-result.result-reaction {
+    animation: resultReaction 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.result-box {
+    border-radius: 15px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.success-box {
+    background-color: rgba(104, 211, 145, 0.15);
+    border: 2px solid #68d391;
+}
+
+.denied-box {
+    background-color: rgba(252, 129, 129, 0.15);
+    border: 2px solid #fc8181;
+}
+
+.error-box {
+    background-color: rgba(237, 137, 54, 0.15);
+    border: 2px solid #ed8936;
+}
+
+.result-icon {
+    font-size: 3rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.success-box .result-icon {
+    color: #68d391;
+}
+
+.denied-box .result-icon {
+    color: #fc8181;
+}
+
+.error-box .result-icon {
+    color: #ed8936;
+}
+
+.result-text {
+    text-align: left;
+}
+
+.result-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    color: #f7fafc;
+}
+
+.result-message {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #cbd5e0;
+}
+
+.result-detail {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.95rem;
+    color: #a0aec0;
+}
+
+.loading {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #cbd5e0;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* ==================== Profile Components (Auth0 arth0 templates) ==================== */

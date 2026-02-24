@@ -84,7 +84,7 @@ Good first issues for new contributors:
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/auth0_Flask.git
+git clone https://github.com/YOUR_USERNAME/auth0_Flask.git # Update actual GitHub URL
 cd auth0_Flask
 ```
 
