@@ -16,6 +16,10 @@ A production-ready Flask extension for JWT authentication and authorization with
 - **📝 Fully Typed** - Complete type hints for excellent IDE support
 - **📚 Well Documented** - Comprehensive documentation and examples
 
+## Overview
+
+This JWT verification extension provides a secure, flexible, and production-ready solution for authenticating and authorizing Flask APIs using JSON Web Tokens (JWTs). It is designed with Auth0 in mind but supports any JWT provider that follows standard specifications.
+
 ## Quick Start
 
 ### Installation

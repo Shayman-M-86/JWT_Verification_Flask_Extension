@@ -47,6 +47,7 @@ Two-server setup demonstrating cross-origin authentication:
 ```
 
 **Components:**
+
 - **Login Provider (5000)** - OAuth flow, session management, web UI
 - **Backend API (5001)** - Protected endpoints with JWT verification
 
@@ -223,7 +224,6 @@ Navigate to: <https://api.localtest.me:5000>
 - **`/protected`** - User profile page (requires authentication)
 - **`/api/test-access`** - Backend API endpoint (requires JWT)
 
-
 ### 4. CORS Configuration
 
 Both servers are configured for cross-origin communication:
@@ -235,6 +235,7 @@ Both servers are configured for cross-origin communication:
 ### 5. Test Backend Access
 
 The **Test Backend Access** button demonstrates:
+
 - Cross-origin request from Login Provider (5000) to Backend (5001)
 
 - Bearer token + cookie authentication
@@ -290,21 +291,26 @@ def login_redirect():
 ## Troubleshooting
 
 ### Certificate Warning
+
 Expected with self-signed certs. Click "Advanced" → proceed.
 
 ### Callback URL Mismatch
+
 Verify Auth0 callback URL: `https://api.localtest.me:5000/login-redirect`
 
 ### CORS Errors
+
 - Ensure both servers running (5000 and 5001)
 - Check CORS origins in both `backend.py` and `login_provider.py`
 
 ### Test Button Shows "Access Denied"
+
 - Log in first via OAuth flow
 - Check cookies in DevTools (Application → Cookies)
 - Verify both servers on correct ports
 
 ### Port Already in Use
+
 ```bash
 # Windows
 netstat -ano | findstr :5000
@@ -315,6 +321,7 @@ lsof -ti:5000 | xargs kill -9
 ```
 
 ### Cookies Not Sent
+
 - Use HTTPS (not HTTP)
 - Use `api.localtest.me` (not `localhost`)
 - Verify `credentials: 'include'` in fetch
