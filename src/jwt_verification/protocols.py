@@ -83,13 +83,6 @@ class TokenVerifier(Protocol):
             InvalidToken: Token is malformed, signature invalid, or claims invalid
             ExpiredToken: Token's exp claim has passed
             AuthError: Any other verification failure
-
-        Security Note:
-            Implementations must validate:
-            - Signature using the correct key
-            - Expiration (exp) and not-before (nbf) times
-            - Issuer (iss) and audience (aud) if configured
-            - Algorithm (alg) against an allowlist
         """
         ...
 

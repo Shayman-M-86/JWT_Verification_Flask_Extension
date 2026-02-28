@@ -74,6 +74,7 @@ class AuthExtension:
         authorizer: Authorizer | None = None,
         extractor: Extractor | None = None,
     ) -> None:
+        """Initialize the Flask app with the AuthExtension."""
         if verifier is not None:
             self._verifier = verifier
         if authorizer is not None:
@@ -81,7 +82,6 @@ class AuthExtension:
         if extractor is not None:
             self._extractor = extractor
 
-        # register on app so you can access it anywhere via current_app.extensions
         app.extensions[_EXT_KEY] = self
 
     def require(
@@ -92,12 +92,52 @@ class AuthExtension:
         require_all_permissions: bool = True,
     ):
         """
-        Decorator factory.
-        - permissions: required permissions for this route
-        - roles: required roles for this route
-        - require_all_permissions:
-            True  -> user must have all permissions listed
-            False -> user must have at least one of the permissions listed
+        Create a Flask view decorator that enforces JWT authentication and optional
+        authorization requirements (permissions and/or roles).
+        This factory returns a decorator that wraps a route handler and performs the
+        following pipeline on each request:
+        1. Extracts the bearer token using the configured token extractor.
+        2. Verifies and decodes the JWT using the configured verifier.
+        3. Stores decoded claims in ``flask.g.jwt`` for downstream access in the route.
+        4. If an authorizer is configured, evaluates required permissions/roles.
+        5. On success, executes the wrapped view function.
+        6. On failure, aborts the request with an HTTP error status.
+        Authorization behavior:
+        - ``permissions`` and ``roles`` are converted to immutable sets
+            (``frozenset``) at decorator-creation time.
+        - If ``self._authorizer`` is ``None``, only authentication is enforced
+            (no permission/role checks).
+        - Permission matching strategy is controlled by
+            ``require_all_permissions``:
+            - ``True``: caller must satisfy *all* listed permissions.
+            - ``False``: caller must satisfy *at least one* listed permission.
+        Error mapping:
+        - ``MissingToken``  -> HTTP 401 (\"Missing token\")
+        - ``ExpiredToken``  -> HTTP 401 (\"Expired token\")
+        - ``InvalidToken``  -> HTTP 401 (\"Invalid token: <reason>\")
+        - ``Forbidden``     -> HTTP 403 (\"Forbidden\")
+        Args:
+                permissions (Sequence[str], optional):
+                        Permission identifiers required to access the endpoint.
+                        Defaults to an empty sequence (no permission requirement unless
+                        enforced by external authorizer policy).
+                roles (Sequence[str], optional):
+                        Role identifiers required to access the endpoint.
+                        Defaults to an empty sequence.
+                require_all_permissions (bool, optional):
+                        Controls whether all permissions are required (AND) or any single
+                        permission is sufficient (OR). Defaults to ``True``.
+        Returns:
+        Callable[[ViewFunc], ViewFunc]:
+                        A decorator that wraps a Flask view function with JWT
+                        authentication/authorization checks.
+        Side Effects:
+                - Writes decoded JWT claims to ``flask.g.jwt`` before calling the view.
+                - May terminate request handling early via ``flask.abort``.
+        Notes:
+                - This function assumes extractor/verifier/authorizer dependencies are
+                    already configured on the extension instance.
+                - Role/permission semantics are delegated to the configured authorizer.
         """
         permissions_set = frozenset(permissions)
         roles_set = frozenset(roles)

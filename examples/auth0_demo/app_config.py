@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from jwt_verification import (
+from src.jwt_verification import (
     Auth0JWKSProvider,
     AuthExtension,
     CookieExtractor,
@@ -29,9 +29,7 @@ ALGORITHMS = ["RS256"]
 ISSUER = f"https://{AUTH0_DOMAIN}/"
 
 
-
-
-#configuration for JWT verification
+# configuration for JWT verification
 access_options = JWTVerifyOptions(issuer=ISSUER, audience=AUTH0_API_AUDIENCE)
 access_provider = Auth0JWKSProvider(ISSUER, cache=InMemoryCache())
 access_verifier = JWTVerifier(access_provider, access_options)

@@ -1,0 +1,48 @@
+// .vscode/tasks.json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "auth0_demo: backend",
+            "type": "shell",
+            "command": "bash examples/auth0_demo/run_backend.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "panel": "dedicated",
+                "group": "auth0-demo",
+                "reveal": "always"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "auth0_demo: login_provider",
+            "type": "shell",
+            "command": "bash examples/auth0_demo/run_login_provider.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "panel": "dedicated",
+                "group": "auth0-demo",
+                "reveal": "always"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "auth0_demo: run both",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "auth0_demo: backend",
+                "auth0_demo: login_provider"
+            ]
+        }
+    ]
+}

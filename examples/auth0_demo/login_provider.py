@@ -5,17 +5,14 @@ This module provides OAuth 2.0 authentication using Auth0 for a Flask web applic
 It handles login, logout, token management, and protected routes.
 """
 
-
 from urllib.parse import quote_plus, urlencode
 
 from authlib.integrations.flask_client import OAuth
-from flask import (Flask, abort, jsonify, make_response, redirect,
-                   render_template, request, url_for)
+from flask import Flask, abort, jsonify, make_response, redirect, render_template, request, url_for
 from flask_cors import CORS
 
-from examples.auth0_demo.app_config import (GLOBAL_CONFIG, auth,
-                                            id_token_verifier)
-from jwt_verification import get_verified_id_claims
+from examples.auth0_demo.app_config import GLOBAL_CONFIG, auth, id_token_verifier
+from src.jwt_verification import get_verified_id_claims
 
 
 def create_app() -> Flask:
@@ -38,9 +35,7 @@ def create_app() -> Flask:
             GLOBAL_CONFIG["FLASK_SECRET_KEY"],
         ]
     ):
-        raise ValueError(
-            "Missing required environment variables for Auth0 configuration"
-        )
+        raise ValueError("Missing required environment variables for Auth0 configuration")
 
     app.secret_key = GLOBAL_CONFIG["FLASK_SECRET_KEY"]
     base_url: str = f"https://{GLOBAL_CONFIG['AUTH0_DOMAIN']}"
@@ -189,11 +184,13 @@ def create_app() -> Flask:
         """Handle unauthorized access errors."""
         # Return JSON for API requests
         if request.path.startswith("/api/"):
-            return jsonify({
-                "status": "denied",
-                "message": "Access Denied - Please login first",
-                "authenticated": False
-            }), 401
+            return jsonify(
+                {
+                    "status": "denied",
+                    "message": "Access Denied - Please login first",
+                    "authenticated": False,
+                }
+            ), 401
         # Return HTML for web routes
         return render_template("401.html", error=error), 401
 

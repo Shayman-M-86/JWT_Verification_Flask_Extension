@@ -121,9 +121,7 @@ class Auth0JWKSProvider(KeyProvider):
         self._ttl = ttl_seconds
         self._missing_ttl = missing_ttl_seconds
         self._cache = cache or InMemoryCache()
-        self._gate = RefreshGate(
-            min_interval=min_interval, alert_threshold=alert_threshold
-        )
+        self._gate = RefreshGate(min_interval=min_interval, alert_threshold=alert_threshold)
         self._client = PyJWKClient(
             f"{issuer}.well-known/jwks.json",
             cache_jwk_set=True,

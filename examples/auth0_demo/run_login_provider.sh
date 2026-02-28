@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
+uv sync --frozen --extra examples
 # Login Provider Server
 
 # "To run both applications, open TWO separate terminals and run:"

@@ -326,31 +326,6 @@ lsof -ti:5000 | xargs kill -9
 - Use `api.localtest.me` (not `localhost`)
 - Verify `credentials: 'include'` in fetch
 
-## Project Structure
-
-```text
-examples/auth0_demo/
-├── backend.py              # Backend API (Port 5001)
-├── login_provider.py       # Login Provider (Port 5000)
-├── app_config.py           # Shared configuration
-├── run_backend.sh          # Start backend script
-├── run_login_provider.sh   # Start login provider script
-├── .env                    # Environment variables
-├── certs/                  # SSL certificates
-├── templates/              # HTML (home, profile, 401)
-└── static/                 # CSS with animations
-```
-
-## Documentation
-
-- [Extension README](../../docs/README.md)
-- [API Reference](../../docs/API_REFERENCE.md)
-- [Auth0 Docs](https://auth0.com/docs)
-
-## License
-
-MIT License
-
 ---
 
 **Last Updated:** 2026

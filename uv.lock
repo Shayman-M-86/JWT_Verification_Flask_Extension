@@ -326,6 +326,7 @@ version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "authlib" },
+    { name = "cffi" },
     { name = "flask" },
     { name = "pyjwt", extra = ["crypto"] },
 ]
@@ -342,6 +343,7 @@ dev = [
 examples = [
     { name = "auth0-server-python" },
     { name = "authlib" },
+    { name = "cffi" },
     { name = "flask-cors" },
     { name = "python-dotenv" },
     { name = "requests" },
@@ -356,6 +358,8 @@ requires-dist = [
     { name = "authlib", specifier = ">=1.6.8" },
     { name = "authlib", marker = "extra == 'examples'", specifier = ">=1.6.0" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
+    { name = "cffi", specifier = ">=2.0.0" },
+    { name = "cffi", marker = "extra == 'examples'", specifier = ">=1.16.0" },
     { name = "flask", specifier = ">=3.0.0" },
     { name = "flask-cors", marker = "extra == 'examples'", specifier = ">=4.0.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
