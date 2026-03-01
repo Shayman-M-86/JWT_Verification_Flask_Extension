@@ -131,7 +131,6 @@ class Auth0JWKSProvider(KeyProvider):
     def get_key_for_token(self, kid: str) -> PyJWK:
         cached = self._cache.get(kid)
 
-        # If you implement set_missing(), cached may be None meaning "known missing"
         if cached is None and kid in getattr(self._cache, "_store", {}):
             # known missing (in-memory example); for a real CacheStore add explicit API
             raise InvalidToken("Unknown kid (cached)")

@@ -20,6 +20,8 @@ class AuthError(Exception):
     Attributes:
         args: Standard Exception args (typically a message string).
     """
+    error_code: int = 401  # Default to 401 Unauthorized for all auth errors
+    description: str = "Authentication error"  # Generic description for clients
 
 
 class MissingToken(AuthError):  # noqa: N818
@@ -32,6 +34,8 @@ class MissingToken(AuthError):  # noqa: N818
 
     This should typically result in an HTTP 401 Unauthorized response.
     """
+    error_code: int = 401
+    description: str = "Missing authentication token"
 
 
 class InvalidToken(AuthError):  # noqa: N818
@@ -52,6 +56,8 @@ class InvalidToken(AuthError):  # noqa: N818
         Distinguish this from ExpiredToken for observability, but both should
         return 401 to clients. Do not expose detailed failure reasons externally.
     """
+    error_code: int = 401
+    description: str = "Invalid token"
 
 
 class ExpiredToken(AuthError):  # noqa: N818
@@ -68,6 +74,8 @@ class ExpiredToken(AuthError):  # noqa: N818
         Treat identically to InvalidToken from a security perspective. The
         distinction helps with metrics and debugging.
     """
+    error_code: int = 401
+    description: str = "Token has expired"
 
 
 class Forbidden(AuthError):  # noqa: N818
@@ -83,3 +91,5 @@ class Forbidden(AuthError):  # noqa: N818
     Note:
         This is the only error that should result in 403. All others are 401.
     """
+    error_code: int = 403
+    description: str = "Forbidden"

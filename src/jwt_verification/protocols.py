@@ -28,30 +28,10 @@ if TYPE_CHECKING:
 
 type Claims = Mapping[str, Any]
 """Represents the decoded JWT payload as an immutable mapping.
-
-Typical claims include:
-- iss (issuer): Who issued the token
-- sub (subject): User/entity the token represents
-- aud (audience): Who the token is intended for
-- exp (expiration): When the token expires (Unix timestamp)
-- iat (issued at): When the token was issued (Unix timestamp)
-- Custom claims: Roles, permissions, user metadata, etc.
-
-Using Mapping (instead of dict) enforces immutability at the type level,
-preventing accidental modification of verified claims.
 """
 
 type ViewFunc = Callable[..., Any]
-"""Represents a Flask view function with arbitrary parameters and return type.
-
-Used primarily by decorators (like @auth.require()) that wrap view functions.
-The return type is Any because Flask views can return:
-- str (HTML content)
-- dict (for jsonify)
-- Response objects
-- Tuples (content, status_code)
-- etc.
-"""
+"""Type alias for Flask view functions (callable that takes any args and returns any)."""
 
 
 # ============================================================================

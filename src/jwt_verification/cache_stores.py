@@ -48,16 +48,6 @@ class InMemoryCache:
     This cache stores PyJWK objects in a Python dict with TTL-based expiration.
     Expired entries are lazily removed on access.
 
-    Use Cases:
-        ✅ Local development
-        ✅ Single-instance deployments
-        ✅ Testing
-        ❌ Multi-instance deployments (each instance has separate cache)
-        ❌ Serverless (cache lost between invocations)
-
-    Thread Safety:
-        This implementation is NOT thread-safe. For multi-threaded applications,
-        consider adding threading.Lock or using Redis cache instead.
 
     Storage Behavior:
         - Valid keys: Stored as PyJWK objects with expiration timestamp
@@ -104,13 +94,11 @@ class InMemoryCache:
         if not item:
             return None
 
-        # Check expiration
         if time.time() >= item.expires_at:
             # Lazy removal of expired entry
             self._store.pop(kid, None)
             return None
 
-        # item.value is PyJWK for valid keys, None for negative caching
         return item.value
 
     def set(self, key: PyJWK, ttl_seconds: int) -> None:
@@ -177,14 +165,6 @@ class RedisCache:
     This cache stores PyJWK objects as JSON in Redis, using Redis's native TTL
     mechanisms for expiration.
 
-    Use Cases:
-        ✅ Multi-instance deployments
-        ✅ Serverless architectures
-        ✅ Production environments
-        ✅ High-traffic applications
-
-    Thread Safety:
-        Redis handles concurrency, so this implementation is thread-safe.
 
     Storage Format:
         - Valid keys: JSON serialization of PyJWK internal dict
@@ -260,7 +240,7 @@ class RedisCache:
             return PyJWK.from_dict(obj)
 
         except (json.JSONDecodeError, ValueError, KeyError) as e:
-            raise RuntimeError(f"Failed to deserialize cached key '{kid}'") from e
+            raise RuntimeError("Failed to deserialize cached key") from e
 
     def set(self, key: PyJWK, ttl_seconds: int) -> None:
         """Cache a signing key with TTL.
@@ -289,7 +269,7 @@ class RedisCache:
                 json.dumps(key._jwk_data),  # pyright: ignore[reportPrivateUsage]
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to cache key '{kid}' in Redis") from e
+            raise RuntimeError("Failed to cache key in Redis") from e
 
     def set_missing(self, kid: str, ttl_seconds: int) -> None:
         """Mark a key ID as missing (negative caching).
@@ -312,7 +292,7 @@ class RedisCache:
                 json.dumps({"__missing__": True}),
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to cache missing kid '{kid}' in Redis") from e
+            raise RuntimeError("Failed to cache missing key in Redis") from e
 
     def is_missing(self, kid: str) -> bool:
         """Check if a key ID is marked as missing.
@@ -333,6 +313,6 @@ class RedisCache:
         try:
             obj = json.loads(data)
             return obj.get("__missing__") is True
-        except json.JSONDecodeError, ValueError:
+        except (json.JSONDecodeError, ValueError):
             # Corrupted data, treat as not missing
             return False

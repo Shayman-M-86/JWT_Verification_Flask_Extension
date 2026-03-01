@@ -24,11 +24,11 @@ from typing import TYPE_CHECKING, Any, Final
 
 from flask import Flask, abort, g, request
 
-from .errors import ExpiredToken, Forbidden, InvalidToken, MissingToken
+from .errors import AuthError
 from .extractors import BearerExtractor
 
 if TYPE_CHECKING:
-    from .protocols import Authorizer, Extractor, TokenVerifier, ViewFunc
+    from .protocols import Authorizer, Claims, Extractor, TokenVerifier, ViewFunc
 
 _EXT_KEY: Final[str] = "auth_extension"
 """Flask extensions registry key for AuthExtension."""
@@ -74,7 +74,14 @@ class AuthExtension:
         authorizer: Authorizer | None = None,
         extractor: Extractor | None = None,
     ) -> None:
-        """Initialize the Flask app with the AuthExtension."""
+        """Initialize the Flask app with the AuthExtension.
+
+        Args:
+            app (Flask): The Flask application instance.
+            verifier (TokenVerifier | None, optional): Token verifier instance. Defaults to None.
+            authorizer (Authorizer | None, optional): Authorizer instance. Defaults to None.
+            extractor (Extractor | None, optional): Token extractor instance. Defaults to None.
+        """
         if verifier is not None:
             self._verifier = verifier
         if authorizer is not None:
@@ -91,31 +98,30 @@ class AuthExtension:
         roles: Sequence[str] = (),
         require_all_permissions: bool = True,
     ):
-        """
-        Create a Flask view decorator that enforces JWT authentication and optional
-        authorization requirements (permissions and/or roles).
-        This factory returns a decorator that wraps a route handler and performs the
-        following pipeline on each request:
-        1. Extracts the bearer token using the configured token extractor.
-        2. Verifies and decodes the JWT using the configured verifier.
-        3. Stores decoded claims in ``flask.g.jwt`` for downstream access in the route.
-        4. If an authorizer is configured, evaluates required permissions/roles.
-        5. On success, executes the wrapped view function.
-        6. On failure, aborts the request with an HTTP error status.
+        """Decorator to protect Flask routes with JWT authentication and optional RBAC.
+
+        Verification behavior:
+        - Extract token using configured extractor
+        - Verify token using configured verifier (signature + claims)
+        - On success: Store decoded claims in `flask.g.jwt` and call the view
+
         Authorization behavior:
-        - ``permissions`` and ``roles`` are converted to immutable sets
-            (``frozenset``) at decorator-creation time.
+        - If an authorizer is configured, call it with the decoded claims and
+          specified permissions/roles.
         - If ``self._authorizer`` is ``None``, only authentication is enforced
             (no permission/role checks).
         - Permission matching strategy is controlled by
             ``require_all_permissions``:
             - ``True``: caller must satisfy *all* listed permissions.
             - ``False``: caller must satisfy *at least one* listed permission.
+
         Error mapping:
         - ``MissingToken``  -> HTTP 401 (\"Missing token\")
         - ``ExpiredToken``  -> HTTP 401 (\"Expired token\")
         - ``InvalidToken``  -> HTTP 401 (\"Invalid token: <reason>\")
         - ``Forbidden``     -> HTTP 403 (\"Forbidden\")
+        - Any other Error   -> HTTP 401 (\"Authentication failed\")
+        -
         Args:
                 permissions (Sequence[str], optional):
                         Permission identifiers required to access the endpoint.
@@ -134,10 +140,6 @@ class AuthExtension:
         Side Effects:
                 - Writes decoded JWT claims to ``flask.g.jwt`` before calling the view.
                 - May terminate request handling early via ``flask.abort``.
-        Notes:
-                - This function assumes extractor/verifier/authorizer dependencies are
-                    already configured on the extension instance.
-                - Role/permission semantics are delegated to the configured authorizer.
         """
         permissions_set = frozenset(permissions)
         roles_set = frozenset(roles)
@@ -161,14 +163,10 @@ class AuthExtension:
                             require_all_permissions=require_all_permissions,
                         )
 
-                except MissingToken:
-                    abort(401, description="Missing token")
-                except ExpiredToken:
-                    abort(401, description="Expired token")
-                except InvalidToken as e:
-                    abort(401, description=f"Invalid token: {e}")
-                except Forbidden:
-                    abort(403, description="Forbidden")
+                except AuthError as e:
+                    abort(e.error_code, description=e.description)
+                except Exception:
+                    abort(401, description="Authentication failed")
 
                 return view(*args, **kwargs)
 
@@ -194,5 +192,11 @@ def get_verified_id_claims(
     """
     token = request.cookies.get(cookie_name)
     if not token:
-        raise MissingToken("Missing id_token cookie")
-    return verifier.verify(token)
+        abort(401, description="Missing token")
+    try:
+        claims: Claims = verifier.verify(token)
+    except AuthError as e:
+        abort(e.error_code, description=e.description)
+    except Exception:
+        abort(401, description="Authentication failed")
+    return claims

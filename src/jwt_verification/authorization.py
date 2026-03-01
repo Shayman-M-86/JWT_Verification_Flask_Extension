@@ -133,14 +133,11 @@ class ClaimAccess:
         """
         raw = claims.get(self._m.permissions_claim, [])
 
-        # Handle space-separated string format (e.g., "read:foo write:bar")
         if isinstance(raw, str):
             return frozenset(raw.split())
 
-        # Handle sequence formats (list, tuple, set, frozenset)
         if isinstance(raw, (list, tuple, set, frozenset)):
             raw_seq = cast(Sequence[object], raw)
-            # Filter to only string values for security (fail-closed)
             cleaned = [item for item in raw_seq if isinstance(item, str)]
             return frozenset(cleaned)
 
@@ -196,15 +193,11 @@ class ClaimAccess:
             r = claims.get(self._m.single_role_claim)
             if isinstance(r, str):
                 roles.add(r)
-            # Non-string values are silently ignored (fail-closed)
 
-        # Extract from primary roles claim
         raw = claims.get(self._m.roles_claim, [])
 
-        # Handle single string role
         if isinstance(raw, str):
             roles.add(raw)
-        # Handle sequence of roles
         elif isinstance(raw, (list, tuple, set, frozenset)):
             raw_seq = cast(Sequence[object], raw)
             # Filter to only string values for security (fail-closed)
@@ -215,51 +208,14 @@ class ClaimAccess:
 
 
 class RBACAuthorizer(Authorizer):
-    """Enforces role-based and permission-based access control requirements.
-
-    This authorizer validates that verified JWT claims contain the required
-    roles and/or permissions for accessing protected resources. It supports
-    flexible authorization policies including "any-of" and "all-of" semantics.
-
-    Security Notes:
-        - Authorization is fail-closed: missing or insufficient roles/permissions
-          raise Forbidden exceptions.
-        - Empty requirement sets (no roles/permissions required) allow access.
-        - Uses set intersection/subset operations for efficient checking.
-        - Relies on ClaimAccess for secure claim extraction.
-
-    Args:
-        claims: ClaimAccess instance for extracting roles/permissions from claims.
-
-    Examples:
-        >>> mapping = ClaimsMapping()
-        >>> accessor = ClaimAccess(mapping)
-        >>> authorizer = RBACAuthorizer(accessor)
-        >>>
-        >>> # Require admin role
-        >>> claims = {"roles": ["admin"]}
-        >>> authorizer.authorize(
-        ...     claims,
-        ...     roles=frozenset({"admin"}),
-        ...     permissions=frozenset(),
-        ...     require_all_permissions=False
-        ... )  # Succeeds
-        >>>
-        >>> # Insufficient permissions
-        >>> claims = {"permissions": ["read:data"]}
-        >>> authorizer.authorize(
-        ...     claims,
-        ...     roles=frozenset(),
-        ...     permissions=frozenset({"read:data", "write:data"}),
-        ...     require_all_permissions=True
-        ... )  # Raises Forbidden
+    """Role-Based Access Control (RBAC) authorizer implementation.
     """
 
     def __init__(self, claims: ClaimAccess) -> None:
         """Initialize the RBAC authorizer with a claim accessor.
 
         Args:
-            claims: ClaimAccess instance for extracting authorization data.
+            claims (ClaimAccess): Instance for extracting roles and permissions from claims.
         """
         self._claims = claims
 
@@ -273,83 +229,29 @@ class RBACAuthorizer(Authorizer):
     ) -> None:
         """Authorize access based on role and permission requirements.
 
-        Validates that the claims contain sufficient authorization. Both role
-        and permission checks must pass (if specified) for authorization to succeed.
-
-        Role Enforcement:
-            - If roles are required, user must have at least ONE of the required roles.
-            - Uses set intersection to check for any matching role.
-
-        Permission Enforcement:
-            - If require_all_permissions is True, user must have ALL required permissions.
-              Uses subset check: required ⊆ user permissions.
-            - If require_all_permissions is False, user must have at least ONE required
-              permission. Uses set intersection to check for any match.
-
         Args:
-            claims: Verified JWT claims dictionary containing authorization data.
-            permissions: Set of permissions required for access. Empty set means
-                no permission requirements.
-            roles: Set of roles required for access (any-of semantics). Empty set
-                means no role requirements.
-            require_all_permissions: If True, user must have all specified permissions.
-                If False, user must have at least one specified permission.
+            claims (Claims): Verified JWT claims dictionary containing authorization data.
+            permissions (frozenset[str]): Set of permissions required for access.
+            roles (frozenset[str]): Set of roles required for access (any-of semantics).
+            require_all_permissions (bool): If True, all permissions are required;
+                                            if False, any permission is sufficient.
 
         Raises:
-            Forbidden: If authorization requirements are not met. Raised when:
-                - Required roles are specified but user has none of them.
-                - Required permissions are specified and:
-                    - (require_all_permissions=True) user lacks any required permission.
-                    - (require_all_permissions=False) user has none of the required
-                      permissions.
-
-        Security Notes:
-            - Fail-closed: missing or malformed claims result in denial.
-            - Both role AND permission checks must pass if both are specified.
-            - Empty requirement sets (frozenset()) impose no restrictions.
-            - Uses ClaimAccess for secure extraction (non-strings filtered).
-
-        Examples:
-            >>> # Require admin or moderator role
-            >>> authorizer.authorize(
-            ...     {"roles": ["admin"]},
-            ...     roles=frozenset({"admin", "moderator"}),
-            ...     permissions=frozenset(),
-            ...     require_all_permissions=False
-            ... )  # Succeeds - has admin role
-            >>>
-            >>> # Require all permissions
-            >>> authorizer.authorize(
-            ...     {"permissions": ["read:data", "write:data", "delete:data"]},
-            ...     roles=frozenset(),
-            ...     permissions=frozenset({"read:data", "write:data"}),
-            ...     require_all_permissions=True
-            ... )  # Succeeds - has all required permissions
-            >>>
-            >>> # Require any permission
-            >>> authorizer.authorize(
-            ...     {"permissions": ["read:data"]},
-            ...     roles=frozenset(),
-            ...     permissions=frozenset({"read:data", "write:data"}),
-            ...     require_all_permissions=False
-            ... )  # Succeeds - has at least one permission
+            Forbidden: If the claims do not satisfy the required roles and permissions.
         """
         # Enforce role requirements (any-of semantics)
         if roles:
             user_roles = self._claims.roles(claims)
             # User must have at least one of the required roles
             if not user_roles.intersection(roles):
-                raise Forbidden
+                raise Forbidden("User does not have required roles")
 
-        # Enforce permission requirements
         if permissions:
             user_perms = self._claims.permissions(claims)
 
             if require_all_permissions:
-                # All-of semantics: user must have every required permission
                 if not permissions.issubset(user_perms):
-                    raise Forbidden
+                    raise Forbidden("User does not have all required permissions")
             else:
-                # Any-of semantics: user must have at least one required permission
                 if not permissions.intersection(user_perms):
-                    raise Forbidden
+                    raise Forbidden("User does not have any of the required permissions")

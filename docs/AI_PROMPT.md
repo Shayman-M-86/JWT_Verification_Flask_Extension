@@ -27,4 +27,3 @@ Example:
 @auth.require(permissions=["write:posts"])
 
 The system assumes tokens are issued by a trusted provider such as Auth0.
-

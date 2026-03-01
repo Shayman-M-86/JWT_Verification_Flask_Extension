@@ -17,10 +17,10 @@ import threading
 import time
 from typing import Final
 
-_DEFAULT_INTERVAL: Final[float] = 60.0
+_DEFAULT_INTERVAL: Final[float] = 10
 """Default minimum interval between refreshes in seconds."""
 
-_DEFAULT_ALERT_THRESHOLD: Final[int] = 40
+_DEFAULT_ALERT_THRESHOLD: Final[int] = 5
 """Default number of denials before alerting (per interval)."""
 
 
@@ -40,18 +40,6 @@ class RefreshGate:
         - Protecting against DoS via invalid kid attacks
         - Rate limiting retry logic after verification failures
 
-    Example:
-        ```python
-        gate = RefreshGate(min_interval=60.0, alert_threshold=40)
-
-        # Attempt refresh
-        if gate.allow():
-            # Allowed - proceed with JWKS refresh
-            refresh_jwks_keys()
-        else:
-            # Denied - too soon since last refresh
-            raise InvalidToken("Key not found and refresh rate limited")
-        ```
 
     Attributes:
         _min_interval: Minimum seconds between allowed refreshes.
@@ -110,11 +98,6 @@ class RefreshGate:
             - On False: Increments retry_attempts counter
             - If retry_attempts >= alert_threshold: Triggers alert hook (TODO)
 
-        Implementation Notes:
-            - Uses monotonic time via time.time() for consistency
-            - Lock held for minimal duration (just state check/update)
-            - First call always returns True (cold start)
-
         Observability TODO:
             Current implementation has a placeholder for alerting. Production
             deployments should:
@@ -125,7 +108,6 @@ class RefreshGate:
         now = time.time()
 
         with self._lock:
-            # Check if we're still in the throttling window
             if now < self._next_allowed_at:
                 # Denied - increment retry counter
                 self._retry_attempts += 1

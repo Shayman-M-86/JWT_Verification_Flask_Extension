@@ -70,11 +70,9 @@ class BearerExtractor:
 
         scheme, token = parts
 
-        # Validate Bearer scheme (case-insensitive per RFC 6750)
         if scheme.lower() != "bearer":
-            raise MissingToken(f"Invalid authorization scheme '{scheme}' (expected 'Bearer')")
+            raise MissingToken("Invalid authorization scheme (expected 'Bearer')")
 
-        # Final trim and validation
         token = token.strip()
         if not token:
             raise MissingToken("Bearer token is empty")

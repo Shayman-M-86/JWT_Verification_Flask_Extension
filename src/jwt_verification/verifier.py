@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 import jwt
 
-from .errors import AuthError, ExpiredToken, InvalidToken
+from .errors import ExpiredToken, InvalidToken
 from .protocols import Claims, KeyProvider, TokenVerifier
 
 if TYPE_CHECKING:
@@ -55,11 +55,11 @@ class JWTVerifier(TokenVerifier):
         key_provider: KeyProvider,
         options: JWTVerifyOptions,
     ) -> None:
-        """Initialize the JWT verifier.
+        """Initialize the JWTVerifier with a key provider and verification options.
 
         Args:
-            key_provider: Provider for resolving signing keys by kid.
-            options: JWT validation configuration.
+            key_provider (KeyProvider): The provider responsible for resolving signing keys.
+            options (JWTVerifyOptions): Configuration for JWT validation rules.
         """
         self._keys = key_provider
         self._opt = options
@@ -67,36 +67,28 @@ class JWTVerifier(TokenVerifier):
     def verify(self, token: str) -> Claims:
         """Verify a JWT and return its decoded claims.
 
-        Extracts the kid from token header, resolves the signing key, and validates
-        the signature and standard claims using PyJWT.
-
         Args:
-            token: Raw JWT string.
-
-        Returns:
-            Claims: Mapping of verified claims from the token payload.
+            token (str): Raw JWT string.
 
         Raises:
             InvalidToken: If token is malformed, signature is invalid, or kid cannot be resolved.
             ExpiredToken: If token's exp claim has passed.
-            AuthError: For any other verification failure.
+
+        Returns:
+            Claims: Mapping of verified claims from the token payload.
         """
         try:
             header = jwt.get_unverified_header(token)
             kid = header.get("kid")
-
-            # Validate kid is present and is a string
-            if not kid or not isinstance(kid, str):
-                raise InvalidToken(
-                    "Token header missing required 'kid' claim or 'kid' is not a string"
-                )
-
-            key = self._keys.get_key_for_token(kid)
-
-        except AuthError:
-            raise
+            # Validate kid is present
         except Exception as e:
-            raise InvalidToken(f"Key resolution failed: {e}") from e
+            raise InvalidToken("Key resolution failed") from e
+
+        if not kid:
+            raise InvalidToken("Token header missing required 'kid' claim")
+
+        key = self._keys.get_key_for_token(kid)
+
 
         try:
             decoded_claims = jwt.decode(
@@ -114,4 +106,4 @@ class JWTVerifier(TokenVerifier):
             raise ExpiredToken("Token has expired") from e
 
         except jwt.InvalidTokenError as e:
-            raise InvalidToken(f"Token validation failed: {e}") from e
+            raise InvalidToken("Token validation failed") from e
