@@ -107,8 +107,8 @@ def create_app() -> Flask:
         """
         try:
             token = auth0.authorize_access_token()
-        except Exception as e:
-            abort(401, description=f"Failed to authorize: {str(e)}")
+        except Exception:
+            abort(401, description="Failed to authorize")
 
         access_token = token.get("access_token")
         id_token = token.get("id_token")
