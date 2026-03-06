@@ -15,7 +15,7 @@ CERT_FILE="examples/auth0_demo/certs/api.localtest.me.pem"
 KEY_FILE="examples/auth0_demo/certs/api.localtest.me-key.pem"
 
 echo "🚀 Starting Login Provider on port 5000..."
-echo "📍 URL: https://api.localtest.me:5000"
+echo "📍 URL: https://localhost:5000"
 echo ""
 
-uv run flask run --host 127.0.0.1 --port 5000 --cert "$CERT_FILE" --key "$KEY_FILE"
+uv run flask run --host 127.0.0.1 --port 5000 
