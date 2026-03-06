@@ -78,7 +78,7 @@ def create_app() -> Flask:
         return jsonify(
             {
                 "status": "error",
-                "message": "Resource not found.",
+                "message": "backend Resource not found.",
             }
         ), 404
 

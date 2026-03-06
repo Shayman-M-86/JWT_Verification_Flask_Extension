@@ -144,6 +144,8 @@ FLASK_ENV=development
 ```bash
 # From the project root
 uv sync --extra examples
+#or
+uv sync --all-extras --link-mode=copy
 ```
 
 This installs:
