@@ -11,11 +11,8 @@ uv sync --frozen --extra examples
 export FLASK_APP=examples.auth0_demo.backend
 export FLASK_ENV=development
 
-CERT_FILE="examples/auth0_demo/certs/api.localtest.me.pem"
-KEY_FILE="examples/auth0_demo/certs/api.localtest.me-key.pem"
-
 echo "🚀 Starting Backend API on port 5001..."
-echo "📍 URL: https://localhost:5001"
+echo "📍 URL: http://localhost:5001"
 echo ""
 
 uv run flask run --host 127.0.0.1 --port 5001 
