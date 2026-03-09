@@ -5,6 +5,12 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.back
+    env_file:
+      - ../.env
+    environment:
+      FLASK_APP: examples.auth0_demo.backend
+      FLASK_DEBUG: "1"
+      PYTHONUNBUFFERED: "1"
     ports:
       - "5001:5001"
     volumes:
@@ -17,6 +23,12 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.front
+    env_file:
+      - ../.env
+    environment:
+      FLASK_APP: examples.auth0_demo.login_provider
+      FLASK_DEBUG: "1"
+      PYTHONUNBUFFERED: "1"
     ports:
       - "5000:5000"
     volumes:

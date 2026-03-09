@@ -8,11 +8,8 @@ uv sync --frozen --extra examples
 # "Terminal 2 - Login Provider (port 5000):"
 
 # From root run: bash examples/auth0_demo/run_login_provider.sh
-export FLASK_APP=examples.auth0_demo.login_provider
-export FLASK_ENV=development
+# export FLASK_APP=examples.auth0_demo.login_provider
 
-echo "🚀 Starting Login Provider on port 5000..."
-echo "📍 URL: http://localhost:5000"
-echo ""
 
-uv run flask run --host 127.0.0.1 --port 5000 
+
+uv run flask run --host 0.0.0.0 --port 5000 
