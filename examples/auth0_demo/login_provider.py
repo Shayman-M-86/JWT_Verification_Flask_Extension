@@ -52,8 +52,14 @@ def create_app() -> Flask:
     CORS(
         app,
         origins=[
-            "https://api.localtest.me:5000",
-            "https://api.localtest.me:5001",
+            "http://127.0.0.1:5000",
+            "http://127.0.0.1:5001",
+            "https://127.0.0.1:5000",
+            "https://127.0.0.1:5001",
+            "http://localhost:5000",
+            "http://localhost:5001",
+            "https://localhost:5000",
+            "https://localhost:5001",
         ],
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
@@ -74,9 +80,7 @@ def create_app() -> Flask:
         client_kwargs={"scope": "openid profile email"},
     )
 
-    host = "api.localtest.me"
-    app_port = 5000
-    print(f"\n🚀 Auth server running at: https://{host}:{app_port}\n")
+
     # ==================== Routes ====================
 
     @app.route("/")
@@ -92,7 +96,8 @@ def create_app() -> Flask:
 
         Redirects the user to Auth0's authorization endpoint.
         """
-        redirect_uri = url_for("login_redirect", _external=True, _scheme="https")
+        redirect_uri = url_for("login_redirect", _external=True, _scheme="http")
+        print(f"Initiating login flow, redirecting to Auth0 with redirect_uri: {redirect_uri}")
         return auth0.authorize_redirect(
             redirect_uri=redirect_uri, audience=GLOBAL_CONFIG["AUTH0_API_AUDIENCE"]
         )
@@ -149,7 +154,7 @@ def create_app() -> Flask:
         """
         logout_url = f"{base_url}/v2/logout?" + urlencode(
             {
-                "returnTo": url_for("home", _external=True, _scheme="https"),
+                "returnTo": url_for("home", _external=True, _scheme="http"),
                 "client_id": GLOBAL_CONFIG["AUTH0_CLIENT_ID"],
             },
             quote_via=quote_plus,

@@ -18,9 +18,14 @@ def create_app() -> Flask:
     CORS(
         app,
         origins=[
-            "https://api.localtest.me:5000",
-            "https://localhost:5000",
+            "http://127.0.0.1:5000",
+            "http://127.0.0.1:5001",
             "https://127.0.0.1:5000",
+            "https://127.0.0.1:5001",
+            "http://localhost:5000",
+            "http://localhost:5001",
+            "https://localhost:5000",
+            "https://localhost:5001",
         ],
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
@@ -78,7 +83,7 @@ def create_app() -> Flask:
         return jsonify(
             {
                 "status": "error",
-                "message": "Resource not found.",
+                "message": "backend Resource not found.",
             }
         ), 404
 
