@@ -2,6 +2,9 @@ services:
   backend:
     container_name: flask-auth-backend
     image: flask-auth-back
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.back
     env_file:
       - ../.env
     environment:
@@ -17,6 +20,9 @@ services:
   frontend:
     container_name: flask-auth-frontend
     image: flask-auth-front
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.front
     env_file:
       - ../.env
     environment:

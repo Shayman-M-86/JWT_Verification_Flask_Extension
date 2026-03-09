@@ -1,0 +1,95 @@
+name: Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ env.AWS_REGION }}
+  EKS_CLUSTER_NAME: your-eks-cluster-name
+  ECR_BACKEND_REPOSITORY: flask-auth-back
+  ECR_FRONTEND_REPOSITORY: flask-auth-front
+  K8S_NAMESPACE: default
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tags
+        run: |
+          echo "BACKEND_IMAGE=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: Build and push backend image
+        run: |
+          docker build -f docker/Dockerfile.back -t "$BACKEND_IMAGE" .
+          docker push "$BACKEND_IMAGE"
+
+      - name: Build and push frontend image
+        run: |
+          docker build -f docker/Dockerfile.front -t "$FRONTEND_IMAGE" .
+          docker push "$FRONTEND_IMAGE"
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region "$AWS_REGION" \
+            --name "$EKS_CLUSTER_NAME"
+
+      - name: Create or update Kubernetes secret
+        run: |
+          kubectl create secret generic flask-auth-secrets \
+            --namespace "$K8S_NAMESPACE" \
+            --from-literal=AUTH0_DOMAIN='${{ secrets.AUTH0_DOMAIN }}' \
+            --from-literal=AUTH0_CLIENT_ID='${{ secrets.AUTH0_CLIENT_ID }}' \
+            --from-literal=AUTH0_CLIENT_SECRET='${{ secrets.AUTH0_CLIENT_SECRET }}' \
+            --from-literal=FLASK_SECRET_KEY='${{ secrets.FLASK_SECRET_KEY }}' \
+            --from-literal=AUTH0_API_AUDIENCE='${{ secrets.AUTH0_API_AUDIENCE }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply manifests
+        run: |
+          kubectl apply -n "$K8S_NAMESPACE" -f k8s/app.yaml
+
+      - name: Update backend image
+        run: |
+          kubectl set image deployment/flask-auth-backend \
+            backend="$BACKEND_IMAGE" \
+            -n "$K8S_NAMESPACE"
+
+      - name: Update frontend image
+        run: |
+          kubectl set image deployment/flask-auth-frontend \
+            frontend="$FRONTEND_IMAGE" \
+            -n "$K8S_NAMESPACE"
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/flask-auth-backend -n "$K8S_NAMESPACE" --timeout=180s
+          kubectl rollout status deployment/flask-auth-frontend -n "$K8S_NAMESPACE" --timeout=180s

@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-auth-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-auth-backend
+  template:
+    metadata:
+      labels:
+        app: flask-auth-backend
+    spec:
+      containers:
+        - name: backend
+          image: 004490858278.dkr.ecr.ap-southeast-2.amazonaws.com/flask-auth-back:latest
+          ports:
+            - containerPort: 5001
+          envFrom:
+            - secretRef:
+                name: flask-auth-secrets
+          env:
+            - name: FLASK_APP
+              value: "examples.auth0_demo.backend"
+            - name: FLASK_DEBUG
+              value: "0"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          command: ["uv", "run", "flask", "run", "--host=0.0.0.0", "--port=5001"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: flask-auth-backend
+  ports:
+    - port: 5001
+      targetPort: 5001
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-auth-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-auth-frontend
+  template:
+    metadata:
+      labels:
+        app: flask-auth-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 004490858278.dkr.ecr.ap-southeast-2.amazonaws.com/flask-auth-front:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: flask-auth-secrets
+          env:
+            - name: FLASK_APP
+              value: "examples.auth0_demo.login_provider"
+            - name: FLASK_DEBUG
+              value: "0"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: BACKEND_BASE_URL
+              value: "http://backend-service:5001"
+          command: ["uv", "run", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: flask-auth-frontend
+  ports:
+    - port: 80
+      targetPort: 5000
+  type: LoadBalancer

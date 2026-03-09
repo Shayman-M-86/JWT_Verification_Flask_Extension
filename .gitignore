@@ -61,3 +61,11 @@ cover/
 
 # python version
 .python-version
+
+.env
+.env.*
+k8s/secret.yaml
+k8s/app.local.yaml
+*.pem
+*.key
+/.pytest_cache
