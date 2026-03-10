@@ -6,11 +6,10 @@ on:
       - main
 
 permissions:
-  id-token: write
   contents: read
 
 env:
-  AWS_REGION: ${{ env.AWS_REGION }}
+  AWS_REGION: ap-southeast-2
   EKS_CLUSTER_NAME: your-eks-cluster-name
   ECR_BACKEND_REPOSITORY: flask-auth-back
   ECR_FRONTEND_REPOSITORY: flask-auth-front
@@ -28,7 +27,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -39,6 +39,22 @@ jobs:
         run: |
           echo "BACKEND_IMAGE=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}:${GITHUB_SHA}" >> "$GITHUB_ENV"
           echo "FRONTEND_IMAGE=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+      
+      - name: Ensure ECR repositories exist
+        run: |
+          aws ecr describe-repositories \
+            --repository-names $ECR_BACKEND_REPOSITORY \
+            --region $AWS_REGION \
+            || aws ecr create-repository \
+                --repository-name $ECR_BACKEND_REPOSITORY \
+                --region $AWS_REGION
+
+          aws ecr describe-repositories \
+            --repository-names $ECR_FRONTEND_REPOSITORY \
+            --region $AWS_REGION \
+            || aws ecr create-repository \
+                --repository-name $ECR_FRONTEND_REPOSITORY \
+                --region $AWS_REGION
 
       - name: Build and push backend image
         run: |
@@ -93,3 +109,19 @@ jobs:
         run: |
           kubectl rollout status deployment/flask-auth-backend -n "$K8S_NAMESPACE" --timeout=180s
           kubectl rollout status deployment/flask-auth-frontend -n "$K8S_NAMESPACE" --timeout=180s
+      
+      - name: Wait for LoadBalancer and print URL
+        run: |
+          echo "Waiting for LoadBalancer..."
+          for i in {1..30}; do
+            URL=$(kubectl get svc frontend-service \
+              -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [ ! -z "$URL" ]; then
+              echo "Frontend URL:"
+              echo "http://$URL"
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "LoadBalancer not ready yet."

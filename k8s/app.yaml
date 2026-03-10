@@ -15,6 +15,7 @@ spec:
       containers:
         - name: backend
           image: 004490858278.dkr.ecr.ap-southeast-2.amazonaws.com/flask-auth-back:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           envFrom:
@@ -58,6 +59,7 @@ spec:
       containers:
         - name: frontend
           image: 004490858278.dkr.ecr.ap-southeast-2.amazonaws.com/flask-auth-front:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           envFrom:
