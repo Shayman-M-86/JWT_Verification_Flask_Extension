@@ -1,0 +1,60 @@
+services:
+  backend:
+    container_name: flask-auth-backend
+    image: flask-auth-back
+    env_file:
+      - ..../.env
+    environment:
+      FLASK_APP: examples.auth0_demo.backend
+      FLASK_DEBUG: "1"
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "5001:5001"
+    volumes:
+      - venv:/app/.venv
+    networks:
+      - shared-net
+  frontend:
+    container_name: flask-auth-frontend
+    image: flask-auth-front
+    env_file:
+      - ..../.env
+    environment:
+      FLASK_APP: examples.auth0_demo.login_provider
+      FLASK_DEBUG: "1"
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "5000:5000"
+    volumes:
+      - venv:/app/.venv
+    networks:
+      - shared-net
+
+# services:
+#   flask-app:
+#     container_name: my-flask-app
+#     image: flask-app
+#     build:
+#       context: .
+#       dockerfile: ./Dockerfile
+#     environment:
+#       FLASK_APP: src.app
+#       FLASK_DEBUG: "1"
+#       DATABASE_URL: ${DATABASE_URL}
+#       SECRET_KEY: ${SECRET_KEY}
+#       PYTHONUNBUFFERED: "1"
+#     volumes:
+#       - .:/app
+#       - venv:/app/.venv
+#     command: ["uv", "run", "flask", "run", "--host=0.0.0.0", "--port=5000", "--debug"]
+#     ports:
+#       - 5000:5000
+#     networks:
+#       - shared-net
+
+networks:
+  shared-net:
+    external: true
+
+volumes:
+  venv:
