@@ -13,6 +13,7 @@ attempts and tracking denial counts for alerting.
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from typing import Final
@@ -22,6 +23,8 @@ _DEFAULT_INTERVAL: Final[float] = 10
 
 _DEFAULT_ALERT_THRESHOLD: Final[int] = 5
 """Default number of denials before alerting (per interval)."""
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class RefreshGate:
@@ -114,12 +117,15 @@ class RefreshGate:
 
                 # Alert if threshold reached
                 if self._retry_attempts >= self._alert_threshold:
-                    # TODO: Integrate with logging/monitoring
-                    # Example implementations:
-                    # - logger.warning(f"JWKS refresh throttled: {self._retry_attempts} denials")
-                    # - metrics.increment("jwks.refresh.throttled")
-                    # - alerts.trigger("jwks_refresh_dos")
-                    pass
+                    if self._retry_attempts == self._alert_threshold:
+                        _LOGGER.warning(
+                            "JWKS refresh throttled",
+                            extra={
+                                "event": "jwks_refresh_throttled",
+                                "denials": self._retry_attempts,
+                                "min_interval": self._min_interval,
+                            },
+                        )
 
                 return False
 

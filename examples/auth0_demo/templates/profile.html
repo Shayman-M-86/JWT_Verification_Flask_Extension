@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Flask Auth0 App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="card profile-card">
+            <div class="profile-header">
+                <h1>👤 User Profile</h1>
+                <p class="profile-subtitle">Your authenticated account information</p>
+            </div>
+
+            <div class="profile-content">
+                {% if user %}
+                <div class="profile-main">
+                    <div class="profile-avatar-section">
+                        {% if user.picture %}
+                        <img src="{{ user.picture }}" alt="Profile Picture" class="profile-pic-large">
+                        {% else %}
+                        <div class="profile-pic-placeholder">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50" cy="50" r="48" fill="#63b3ed" opacity="0.2" />
+                                <circle cx="50" cy="35" r="15" fill="#63b3ed" />
+                                <path d="M25 75 Q25 55 50 55 Q75 55 75 75" fill="#63b3ed" />
+                            </svg>
+                        </div>
+                        {% endif %}
+
+                        {% if user.name %}
+                        <h2 class="profile-name">{{ user.name }}</h2>
+                        {% endif %}
+
+                        {% if user.email %}
+                        <p class="profile-email">{{ user.email }}</p>
+                        {% endif %}
+
+                        {% if user.email_verified %}
+                        <span class="badge badge-success">✓ Email Verified</span>
+                        {% else %}
+                        <span class="badge badge-warning">⚠ Email Not Verified</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="profile-details-section">
+                        <h3>📋 Account Details</h3>
+
+                        <div class="detail-grid">
+                            {% if user.sub %}
+                            <div class="detail-item">
+                                <span class="detail-label">User ID:</span>
+                                <span class="detail-value">{{ user.sub }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.nickname %}
+                            <div class="detail-item">
+                                <span class="detail-label">Nickname:</span>
+                                <span class="detail-value">{{ user.nickname }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.email %}
+                            <div class="detail-item">
+                                <span class="detail-label">Email Address:</span>
+                                <span class="detail-value">{{ user.email }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.email_verified is defined %}
+                            <div class="detail-item">
+                                <span class="detail-label">Email Status:</span>
+                                <span class="detail-value">
+                                    {% if user.email_verified %}
+                                    ✓ Verified
+                                    {% else %}
+                                    ⚠ Not Verified
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.updated_at %}
+                            <div class="detail-item">
+                                <span class="detail-label">Last Updated:</span>
+                                <span class="detail-value">{{ user.updated_at }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <h3>🔐 Authentication Details</h3>
+
+                        <div class="detail-grid">
+                            {% if user.iss %}
+                            <div class="detail-item">
+                                <span class="detail-label">Issuer:</span>
+                                <span class="detail-value detail-truncate">{{ user.iss }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.aud %}
+                            <div class="detail-item">
+                                <span class="detail-label">Audience (Client):</span>
+                                <span class="detail-value detail-truncate">{{ user.aud }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.sid %}
+                            <div class="detail-item">
+                                <span class="detail-label">Session ID:</span>
+                                <span class="detail-value">{{ user.sid }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.nonce %}
+                            <div class="detail-item">
+                                <span class="detail-label">Nonce:</span>
+                                <span class="detail-value">{{ user.nonce }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <h3>⏰ Token Timing</h3>
+
+                        <div class="detail-grid">
+                            {% if user.iat %}
+                            <div class="detail-item">
+                                <span class="detail-label">Issued At:</span>
+                                <span class="detail-value">
+                                    {{ user.iat }}
+                                    <span class="timestamp-hint">(Unix timestamp)</span>
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.exp %}
+                            <div class="detail-item">
+                                <span class="detail-label">Expires At:</span>
+                                <span class="detail-value">
+                                    {{ user.exp }}
+                                    <span class="timestamp-hint">(Unix timestamp)</span>
+                                </span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.iat and user.exp %}
+                            <div class="detail-item">
+                                <span class="detail-label">Token Lifetime:</span>
+                                <span class="detail-value">{{ (user.exp - user.iat) // 3600 }} hours</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if user.permissions %}
+                        <div class="permissions-section">
+                            <h4>🔑 Permissions</h4>
+                            <div class="permissions-list">
+                                {% for permission in user.permissions %}
+                                <span class="permission-badge">{{ permission }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if user.roles %}
+                        <div class="permissions-section">
+                            <h4>👥 Roles</h4>
+                            <div class="permissions-list">
+                                {% for role in user.roles %}
+                                <span class="permission-badge role-badge">{{ role }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="token-info">
+                            <details>
+                                <summary>🔍 View Full Token Claims (JSON)</summary>
+                                <pre class="token-claims">{{ user | tojson(indent=2) }}</pre>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="error-state">
+                    <p>No user information available.</p>
+                </div>
+                {% endif %}
+
+                <div class="profile-actions">
+                    <a href="{{ url_for('home') }}" class="button button-secondary">
+                        🏠 Back to Home
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="button logout">
+                        🚪 Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

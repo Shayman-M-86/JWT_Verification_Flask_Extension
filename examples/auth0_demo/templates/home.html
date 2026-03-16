@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Flask Auth0 App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo-container">
+                <svg class="auth-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="100" cy="100" r="90" fill="#63b3ed" opacity="0.2" />
+                    <path d="M100 40 L140 80 L120 80 L120 120 L80 120 L80 80 L60 80 Z" fill="#63b3ed" />
+                    <circle cx="100" cy="145" r="15" fill="#63b3ed" />
+                </svg>
+            </div>
+
+            <h1>Welcome to Flask Auth0</h1>
+
+            <div class="content-section">
+                <p class="intro-text">
+                    Secure authentication powered by Auth0.
+                    Explore the features below to get started.
+                </p>
+
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">🔐</div>
+                        <h3>Secure Login</h3>
+                        <p>Industry-standard OAuth 2.0 authentication</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>User Profile</h3>
+                        <p>View your authenticated user information</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">🔑</div>
+                        <h3>Token Management</h3>
+                        <p>Secure JWT token handling</p>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="{{ url_for('login') }}" class="button button-primary">
+                        🚀 Login with Auth0
+                    </a>
+                    <a href="{{ url_for('protected') }}" class="button button-secondary">
+                        👤 View Profile (Protected)
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="button logout">
+                        🚪 Logout
+                    </a>
+                </div>
+
+                <div class="test-section">
+                    <button id="testAccessBtn" class="button button-test" onclick="testBackendAccess()">
+                        🧪 Test Backend Access
+                    </button>
+                    <div id="testResult" class="test-result" style="display: none;">
+                        <div id="resultContent"></div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <p class="info-title">💡 Quick Tip</p>
+                    <p>Click "Login with Auth0" to authenticate. Once logged in, you'll have access to protected
+                        resources and your profile information. Use the test button to verify your access.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testBackendAccess() {
+            const btn = document.getElementById('testAccessBtn');
+            const resultDiv = document.getElementById('testResult');
+            const resultContent = document.getElementById('resultContent');
+
+            // Disable button and show loading state
+            btn.disabled = true;
+            btn.textContent = '⏳ Testing...';
+            resultDiv.style.display = 'block';
+            resultContent.innerHTML = '<p class="loading">Checking authentication status...</p>';
+
+            try {
+                // Construct backend API URL (port 5001 instead of login provider port 5000)
+                const hostname = window.location.hostname;
+                const backendUrl = `${window.location.protocol}//${hostname}:5001/api/test-access`;
+
+                // Extract access token from cookies
+                const accessToken = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('access_token='))
+                    ?.split('=')[1];
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+
+                // Add Authorization header if token exists
+                if (accessToken) {
+                    headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+
+                const response = await fetch(backendUrl, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: headers
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    resultContent.innerHTML = `
+                        <div class="result-box success-box">
+                            <div class="result-icon">✓</div>
+                            <div class="result-text">
+                                <h3 class="result-title">Permission Granted</h3>
+                                <p class="result-message">${data.message}</p>
+                                <p class="result-detail">You are authenticated and can access protected resources.</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Failure
+                    resultContent.innerHTML = `
+                        <div class="result-box denied-box">
+                            <div class="result-icon">✗</div>
+                            <div class="result-text">
+                                <h3 class="result-title">Access Denied</h3>
+                                <p class="result-message">${data.message}</p>
+                                <p class="result-detail">Please log in to access protected resources.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="result-box error-box">
+                        <div class="result-icon">⚠</div>
+                        <div class="result-text">
+                            <h3 class="result-title">Test Error</h3>
+                            <p class="result-message">Failed to test backend access</p>
+                            <p class="result-detail">${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                // Re-enable button and trigger reaction animation
+                btn.disabled = false;
+                btn.textContent = '🧪 Test Backend Access';
+
+                // Trigger reaction animation by removing and re-adding the class
+                resultDiv.classList.remove('result-reaction');
+                // Force reflow to restart animation
+                void resultDiv.offsetWidth;
+                resultDiv.classList.add('result-reaction');
+            }
+        }
+    </script>

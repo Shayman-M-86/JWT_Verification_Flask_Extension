@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>401 Unauthorized - Access Denied</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="card error-card">
+            <div class="error-icon-container">
+                <svg class="error-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="100" cy="100" r="90" fill="#fc8181" opacity="0.2" />
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="#fc8181" stroke-width="8" />
+                    <path d="M70 70 L130 130 M130 70 L70 130" stroke="#fc8181" stroke-width="8"
+                        stroke-linecap="round" />
+                </svg>
+            </div>
+
+            <h1 class="error-title">401 Unauthorized</h1>
+            <h2 class="error-subtitle">Access Denied</h2>
+
+            <div class="error-content">
+                <div class="error-message">
+                    <p class="error-description">
+                        {{ error.description if error and error.description else "You need to be authenticated to access
+                        this resource." }}
+                    </p>
+                </div>
+
+                <div class="error-info-box">
+                    <p class="info-title">🔐 Authentication Required</p>
+                    <p>This page requires you to be logged in. Please authenticate using your Auth0 credentials to
+                        continue.</p>
+                </div>
+
+                <div class="error-actions">
+                    <a href="{{ url_for('login') }}" class="button button-primary">
+                        🔑 Login to Continue
+                    </a>
+                    <a href="{{ url_for('home') }}" class="button button-secondary">
+                        🏠 Back to Home
+                    </a>
+                </div>
+
+                <div class="error-details">
+                    <details>
+                        <summary>Technical Details</summary>
+                        <div class="technical-info">
+                            <p><strong>Error Code:</strong> 401</p>
+                            <p><strong>Error Type:</strong> Unauthorized</p>
+                            <p><strong>Required:</strong> Valid authentication token</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

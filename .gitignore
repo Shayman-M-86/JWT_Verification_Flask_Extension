@@ -53,7 +53,7 @@ pytest_cache/
 cover/
 
 
-*temp*
+*temp
 *.pem
 
 # Jupyter Notebook
@@ -69,3 +69,7 @@ k8s/app.local.yaml
 *.pem
 *.key
 /.pytest_cache
+*k8s
+secret.example.yaml
+app.yaml
+*.pytest_cache

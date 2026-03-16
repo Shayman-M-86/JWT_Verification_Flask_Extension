@@ -3,7 +3,7 @@ services:
     container_name: flask-auth-backend
     image: flask-auth-back
     env_file:
-      - ../.env
+      - ..../.env
     environment:
       FLASK_APP: examples.auth0_demo.backend
       FLASK_DEBUG: "1"
@@ -18,7 +18,7 @@ services:
     container_name: flask-auth-frontend
     image: flask-auth-front
     env_file:
-      - ../.env
+      - ..../.env
     environment:
       FLASK_APP: examples.auth0_demo.login_provider
       FLASK_DEBUG: "1"
